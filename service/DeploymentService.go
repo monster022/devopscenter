@@ -32,3 +32,9 @@ func DeploymentImagePatch(configFile, namespace, containerName, deploymentName, 
 	_, err := kubeEngine.AppsV1().Deployments(namespace).Patch(context.TODO(), deploymentName, types.StrategicMergePatchType, data, metaV1.PatchOptions{})
 	return err
 }
+
+func DeploymentAdd(configFile, namespace string, deployment *v1.Deployment) (*v1.Deployment, error) {
+	kubeEngine := helper.KubernetesConnect(configFile)
+	data, err := kubeEngine.AppsV1().Deployments(namespace).Create(context.TODO(), deployment, metaV1.CreateOptions{})
+	return data, err
+}

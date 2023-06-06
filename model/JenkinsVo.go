@@ -7,7 +7,7 @@ type BuildParams struct {
 	PackageName string `json:"package_name"`
 }
 
-type TemplateDotnet struct {
+type JenkinsTemplate struct {
 	Env                 string `json:"env"`
 	Repository          string `json:"repository"`
 	DependentRepository string `json:"dependent_repository"`
@@ -19,4 +19,5 @@ type TemplateDotnet struct {
 	BuildPath           string `json:"build_path"`
 	PackageName         string `json:"package_name"`
 	ImageSource         string `json:"image_source"`
+	Language            string `json:"language"`
 }

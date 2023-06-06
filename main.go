@@ -20,12 +20,6 @@ func main() {
 
 	//跨域中间件
 	app.Use(middleware.Cors())
-	// 配置 Cors 中间件
-	//config := cors.DefaultConfig()
-	//config.AllowOrigins = []string{"http://localhost:3000"} // 允许的前端域名和端口
-	//config.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"}
-	//config.AllowHeaders = []string{"Origin", "Content-Type", "Accept"}
-	//app.Use(cors.New(config))
 
 	// 日志中间件
 	app.Use(middleware.Log())

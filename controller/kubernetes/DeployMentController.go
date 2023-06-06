@@ -4,6 +4,9 @@ import (
 	"devopscenter/model"
 	"devopscenter/service"
 	"github.com/gin-gonic/gin"
+	appsV1 "k8s.io/api/apps/v1"
+	coreV1 "k8s.io/api/core/v1"
+	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http"
 	"strconv"
 )
@@ -133,6 +136,70 @@ func DeployPatch(c *gin.Context) {
 		return
 	} else if number > 1 {
 		response.Message = "Modify Lot Rows"
+		c.JSON(http.StatusOK, response)
+		return
+	}
+	c.JSON(http.StatusOK, response)
+}
+
+func DeployAdd(c *gin.Context) {
+	response := model.Res{
+		Code:    20000,
+		Message: "successful",
+		Data:    nil,
+	}
+	json := model.DeploymentAdd{}
+	c.ShouldBindJSON(&json)
+	replicas := int32(json.Replicas)
+	configFile := json.Env + "config"
+	deployment := &appsV1.Deployment{
+		ObjectMeta: metaV1.ObjectMeta{
+			Labels: map[string]string{
+				"app": json.Name,
+			},
+			Name:      json.Name,
+			Namespace: json.Namespace,
+		},
+		Spec: appsV1.DeploymentSpec{
+			Replicas: &replicas,
+			Selector: &metaV1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app": json.Name,
+				},
+			},
+			Template: coreV1.PodTemplateSpec{
+				ObjectMeta: metaV1.ObjectMeta{
+					Labels: map[string]string{
+						"app": json.Name,
+					},
+				},
+				Spec: coreV1.PodSpec{
+					Containers: []coreV1.Container{
+						{
+							Name:            json.Name,
+							Image:           json.Image,
+							ImagePullPolicy: coreV1.PullIfNotPresent,
+							EnvFrom: []coreV1.EnvFromSource{
+								{
+									ConfigMapRef: &coreV1.ConfigMapEnvSource{
+										LocalObjectReference: coreV1.LocalObjectReference{
+											Name: json.Name,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	data, err := service.DeploymentAdd(configFile, json.Namespace, deployment)
+	response.Data = data
+	if err != nil {
+		response.Message = "deployment create failed"
+		response.Data = err
 		c.JSON(http.StatusOK, response)
 		return
 	}

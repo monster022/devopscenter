@@ -21,7 +21,7 @@ func Build(c *gin.Context) {
 		c.JSON(http.StatusOK, response)
 		return
 	}
-	data := model.TemplateDotnet{}
+	data := model.JenkinsTemplate{}
 	err := c.ShouldBindJSON(&data)
 	if err != nil {
 		response.Message = "Json Paras Failed"
@@ -50,7 +50,7 @@ func BuildV2(c *gin.Context) {
 		Message: "successful",
 		Data:    nil,
 	}
-	data := model.TemplateDotnet{}
+	data := model.JenkinsTemplate{}
 	if err := c.ShouldBindJSON(&data); err != nil {
 		response.Message = "Json Paras Failed"
 		response.Data = err
@@ -58,10 +58,10 @@ func BuildV2(c *gin.Context) {
 		return
 	}
 	//name := data.Project + "_" + data.Env
-	name := "Template_Dotnet"
+	name := data.Language + "_Template"
 	// 检查Jenkins job 是否存在
 	if result := service.CheckJob(name); result == false {
-		response.Message = "Jenkins Job Not Exist"
+		response.Message = "Jenkins Job " + name + " Not Exist"
 		response.Data = result
 		c.JSON(http.StatusOK, response)
 		return

@@ -6,6 +6,14 @@ import (
 	"log"
 )
 
+type DeploymentAdd struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+	Replicas  int    `json:"replicas"`
+	Image     string `json:"image"`
+	Env       string `json:"env"`
+}
+
 type DeploymentImage struct {
 	ImageSource    string `json:"image_source"`
 	ContainerName  string `json:"container_name"`

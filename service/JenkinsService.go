@@ -14,7 +14,7 @@ func CheckJob(name string) bool {
 	return true
 }
 
-func BuildJob(name string, data *model.TemplateDotnet) (int64, error) {
+func BuildJob(name string, data *model.JenkinsTemplate) (int64, error) {
 	jenkinsEngine := helper.JkConnect
 	params := map[string]string{
 		"Repository":           data.Repository,
