@@ -11,6 +11,7 @@ func GitlabRegister(c *gin.Engine) {
 		api.POST("/project", gitlab.Create)
 		api.PATCH("/project", gitlab.Patch)
 		api.GET("/project", gitlab.List)
+		api.DELETE("/project/:id", gitlab.Delete)
 
 		api.GET("/project/branch", gitlab.BranchList)
 

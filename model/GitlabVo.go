@@ -8,7 +8,8 @@ import (
 )
 
 type Application struct {
-	Name string `json:"name"`
+	Name     string `json:"name"`
+	Language string `json:"language"`
 }
 type Branch struct {
 	ShortID       string     `json:"short_id"`
@@ -37,6 +38,7 @@ type Project struct {
 	ProjectRepo   string `json:"project_repo" db:"project_repo"`
 	ProjectStatus int    `json:"project_status" db:"project_status"`
 	ProjectNumber int    `json:"project_number" db:"project_number"`
+	Language      string `json:"language"`
 }
 
 func (p *Project) Insert() bool {
@@ -46,8 +48,8 @@ func (p *Project) Insert() bool {
 	if count != 0 {
 		return false
 	}
-	_, err := mysqlEngine.Exec("insert into project(project_id, project_name, project_repo, project_status, project_number) values (?, ?, ?, ?, ?)",
-		p.ProjectId, p.ProjectName, p.ProjectRepo, p.ProjectStatus, p.ProjectNumber)
+	_, err := mysqlEngine.Exec("insert into project(project_id, project_name, project_repo, project_status, project_number, language) values (?, ?, ?, ?, ?, ?)",
+		p.ProjectId, p.ProjectName, p.ProjectRepo, p.ProjectStatus, p.ProjectNumber, p.Language)
 	if err != nil {
 		return false
 	}
@@ -72,7 +74,7 @@ func (p *Project) List(page int, size int) (data []*Project) {
 	}
 	for rows.Next() {
 		obj := &Project{}
-		err = rows.Scan(&obj.Id, &obj.ProjectId, &obj.ProjectName, &obj.ProjectRepo, &obj.ProjectStatus, &obj.ProjectNumber)
+		err = rows.Scan(&obj.Id, &obj.ProjectId, &obj.ProjectName, &obj.ProjectRepo, &obj.ProjectStatus, &obj.ProjectNumber, &obj.Language)
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -86,4 +88,13 @@ func (p *Project) Count() (total int) {
 	mysqlEngine := helper.SqlContext
 	mysqlEngine.QueryRow("select count(*) from project").Scan(&total)
 	return total
+}
+
+func (p *Project) Delete(id int) bool {
+	mysqlEngine := helper.SqlContext
+	_, err := mysqlEngine.Exec("delete from project where id = ?", id)
+	if err != nil {
+		return false
+	}
+	return true
 }

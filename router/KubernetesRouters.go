@@ -14,6 +14,7 @@ func KubernetesRegister(c *gin.Engine) {
 		api.GET("/deployment/:name", kubernetes.DeployGet)
 		api.GET("/deploymentV2", kubernetes.DeployListV2)
 		api.PATCH("/deployment", kubernetes.DeployPatch)
+		api.POST("/deployment", kubernetes.DeployAdd)
 
 		api.GET("/ingress", kubernetes.IngressList)
 		api.GET("/ingressV2", kubernetes.IngressListV2)
@@ -27,5 +28,7 @@ func KubernetesRegister(c *gin.Engine) {
 		api.GET("/cronjob", kubernetes.CronJobList)
 		api.GET("/cronjobV2", kubernetes.CronJobListV2)
 
+		api.GET("/configmap", kubernetes.ConfigMapList)
+		api.POST("/configmap", kubernetes.ConfigMapAdd)
 	}
 }

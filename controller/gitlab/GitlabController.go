@@ -10,7 +10,7 @@ import (
 
 func Create(c *gin.Context) {
 	response := model.Res{
-		Code:    201,
+		Code:    20000,
 		Message: "successful",
 		Data:    nil,
 	}
@@ -34,6 +34,7 @@ func Create(c *gin.Context) {
 	project.ProjectName = data.Name
 	project.ProjectRepo = repo
 	project.ProjectStatus = 1
+	project.Language = data.Language
 	result1 := project.Insert()
 	response.Data = result1
 	if result1 == false {
@@ -96,6 +97,30 @@ func List(c *gin.Context) {
 		"data":    data,
 		"total":   total,
 	})
+}
+
+func Delete(c *gin.Context) {
+	response := model.Res{
+		Code:    20000,
+		Message: "successful",
+		Data:    nil,
+	}
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		response.Message = "id type convert failed"
+		response.Data = err
+		c.JSON(http.StatusOK, response)
+		return
+	}
+	data := model.Project{}
+	result := data.Delete(id)
+	response.Data = result
+	if result == false {
+		response.Message = "filed delete failed"
+		c.JSON(http.StatusOK, response)
+		return
+	}
+	c.JSON(http.StatusOK, response)
 }
 
 func BranchList(c *gin.Context) {
