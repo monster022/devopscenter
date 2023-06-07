@@ -21,6 +21,9 @@ func main() {
 	//跨域中间件
 	app.Use(middleware.Cors())
 
+	//登录中间件
+	//app.Use(middleware.LdapAuth())
+
 	// 日志中间件
 	app.Use(middleware.Log())
 
