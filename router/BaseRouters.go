@@ -15,14 +15,14 @@ type PostData struct {
 
 func BaseRegister(c *gin.Engine) {
 	c.GET("/metrics", middleware.PromHandler(promhttp.Handler()))
-	api := c.Group("/devops/", middleware.JwtAuth())
-	{
-		api.GET("/base", base.Get)
-		api.POST("/base/json", base.PostJson)
-		api.POST("/base/from-data", base.PostForm)
-		api.DELETE("/base", base.Delete)
-		api.PATCH("/base", base.Patch)
+	c.GET("/base", base.Get)
+	c.POST("/base/json", base.PostJson)
+	c.POST("/base/from-data", base.PostForm)
+	c.DELETE("/base", base.Delete)
+	c.PATCH("/base", base.Patch)
 
+	api := c.Group("/devops/")
+	{
 		api.POST("/login", login.Auth)
 	}
 }
