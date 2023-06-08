@@ -27,7 +27,7 @@ func LdapAuth() gin.HandlerFunc {
 		}
 		defer l.Close()
 
-		// Bind with user's credentials
+		// Bind with user's credential
 		err = l.Bind(fmt.Sprintf("cn=%s,ou=技术部,dc=mojorycorp,dc=cn", username), password)
 		if err != nil {
 			log.Printf("Error binding with user's credentials: %v", err)
