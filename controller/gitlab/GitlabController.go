@@ -45,16 +45,14 @@ func Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, response)
 }
 
-func Patch(c *gin.Context) {
+func StatusPatch(c *gin.Context) {
 	response := model.Res{
-		Code:    200,
+		Code:    20000,
 		Message: "successful",
 		Data:    nil,
 	}
-	projectStatus := c.Query("project_status")
-	var Id = c.Query("id")
-	status, err1 := strconv.Atoi(projectStatus)
-	id, err2 := strconv.Atoi(Id)
+	status, err1 := strconv.Atoi(c.Query("status"))
+	id, err2 := strconv.Atoi(c.Query("id"))
 	if err1 != nil || err2 != nil {
 		response.Message = "Type Convert Failed"
 		response.Data = err1
@@ -62,11 +60,10 @@ func Patch(c *gin.Context) {
 		return
 	}
 	project := model.Project{}
-
 	result := project.Patch(id, status)
 	response.Data = result
 	if result == false {
-		response.Message = "Project_Status Charge Failed"
+		response.Message = "Project_Status Change Failed"
 		c.JSON(http.StatusOK, response)
 		return
 	}
