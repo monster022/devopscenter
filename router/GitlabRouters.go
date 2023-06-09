@@ -12,6 +12,7 @@ func GitlabRegister(c *gin.Engine) {
 		api.PATCH("/project", gitlab.StatusPatch)
 		api.GET("/project", gitlab.List)
 		api.DELETE("/project/:id", gitlab.Delete)
+		api.PATCH("/project/:name", gitlab.EditPatch)
 
 		api.GET("/project/branch", gitlab.BranchList)
 
