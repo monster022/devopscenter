@@ -8,8 +8,10 @@ import (
 )
 
 type Application struct {
-	Name     string `json:"name"`
-	Language string `json:"language"`
+	Name        string `json:"name"`
+	Language    string `json:"language"`
+	BuildPath   string `json:"build_path"`
+	PackageName string `json:"package_name"`
 }
 type Branch struct {
 	ShortID       string     `json:"short_id"`
@@ -38,7 +40,9 @@ type Project struct {
 	ProjectRepo   string `json:"project_repo" db:"project_repo"`
 	ProjectStatus int    `json:"project_status" db:"project_status"`
 	ProjectNumber int    `json:"project_number" db:"project_number"`
-	Language      string `json:"language"`
+	Language      string `json:"language" db:"language"`
+	BuildPath     string `json:"build_path" db:"build_path"`
+	PackageName   string `json:"package_name" db:"package_name"`
 }
 
 func (p *Project) Insert() bool {
@@ -48,8 +52,8 @@ func (p *Project) Insert() bool {
 	if count != 0 {
 		return false
 	}
-	_, err := mysqlEngine.Exec("insert into project(project_id, project_name, project_repo, project_status, project_number, language) values (?, ?, ?, ?, ?, ?)",
-		p.ProjectId, p.ProjectName, p.ProjectRepo, p.ProjectStatus, p.ProjectNumber, p.Language)
+	_, err := mysqlEngine.Exec("insert into project(project_id, project_name, project_repo, project_status, project_number, language, build_path, package_name) values (?, ?, ?, ?, ?, ?, ?, ?)",
+		p.ProjectId, p.ProjectName, p.ProjectRepo, p.ProjectStatus, p.ProjectNumber, p.Language, p.BuildPath, p.PackageName)
 	if err != nil {
 		return false
 	}
@@ -74,7 +78,7 @@ func (p *Project) List(page int, size int) (data []*Project) {
 	}
 	for rows.Next() {
 		obj := &Project{}
-		err = rows.Scan(&obj.Id, &obj.ProjectId, &obj.ProjectName, &obj.ProjectRepo, &obj.ProjectStatus, &obj.ProjectNumber, &obj.Language)
+		err = rows.Scan(&obj.Id, &obj.ProjectId, &obj.ProjectName, &obj.ProjectRepo, &obj.ProjectStatus, &obj.ProjectNumber, &obj.Language, &obj.BuildPath, &obj.PackageName)
 		if err != nil {
 			log.Fatalln(err)
 		}

@@ -9,7 +9,7 @@ func GitlabRegister(c *gin.Engine) {
 	api := c.Group("/devops")
 	{
 		api.POST("/project", gitlab.Create)
-		api.PATCH("/project", gitlab.Patch)
+		api.PATCH("/project", gitlab.StatusPatch)
 		api.GET("/project", gitlab.List)
 		api.DELETE("/project/:id", gitlab.Delete)
 
