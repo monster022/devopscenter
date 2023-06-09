@@ -35,6 +35,8 @@ func Create(c *gin.Context) {
 	project.ProjectRepo = repo
 	project.ProjectStatus = 1
 	project.Language = data.Language
+	project.BuildPath = data.BuildPath
+	project.PackageName = data.PackageName
 	result1 := project.Insert()
 	response.Data = result1
 	if result1 == false {
