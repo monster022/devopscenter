@@ -102,3 +102,12 @@ func (p *Project) Delete(id int) bool {
 	}
 	return true
 }
+
+func (p *Project) Edit(name, buildPath, packageName string) bool {
+	mysqlEngine := helper.SqlContext
+	_, err := mysqlEngine.Exec("UPDATE project SET build_path=?, package_name=? WHERE project_name=?", buildPath, packageName, name)
+	if err != nil {
+		return false
+	}
+	return true
+}

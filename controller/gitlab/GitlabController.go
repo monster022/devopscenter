@@ -122,6 +122,34 @@ func Delete(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+func EditPatch(c *gin.Context) {
+	response := model.Res{
+		Code:    20000,
+		Message: "successful",
+		Data:    nil,
+	}
+	type body struct {
+		BuildPath   string `json:"build_path"`
+		PackageName string `json:"package_name"`
+	}
+	json := body{}
+	if err := c.ShouldBindJSON(&json); err != nil {
+		response.Message = "Json Parse Failed"
+		response.Data = err
+		c.JSON(http.StatusOK, response)
+		return
+	}
+	project := model.Project{}
+	if result := project.Edit(c.Param("name"), json.BuildPath, json.PackageName); result == false {
+		response.Message = "Modify Failed"
+		response.Data = result
+		c.JSON(http.StatusOK, response)
+		return
+	}
+	response.Data = true
+	c.JSON(http.StatusOK, response)
+}
+
 func BranchList(c *gin.Context) {
 	response := model.Res{
 		Code:    20000,
