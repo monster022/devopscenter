@@ -20,4 +20,5 @@ type JenkinsTemplate struct {
 	PackageName         string `json:"package_name"`
 	ImageSource         string `json:"image_source"`
 	Language            string `json:"language"`
+	CreateBy            string `json:"create_by"`
 }

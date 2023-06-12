@@ -52,3 +52,18 @@ func BranchList(id int) ([]*model.Branch, error) {
 	}
 	return data, err
 }
+
+func RecordBuildInfo(params *model.JenkinsTemplate, marshalData string, jobId int) bool {
+
+	data := model.ProjectDetail{}
+	data.Project = params.Project
+	data.Name = params.CreateBy
+	data.Params = marshalData
+	data.JobName = params.Language + "_Template"
+	data.JobId = jobId + 1
+	data.Message = "ing"
+	if !data.Create() {
+		return false
+	}
+	return true
+}

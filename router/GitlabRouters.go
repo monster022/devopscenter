@@ -18,5 +18,8 @@ func GitlabRegister(c *gin.Engine) {
 
 		api.GET("/project/search", gitlab.Search)
 		api.GET("/project/search/all", gitlab.SearchAll)
+
+		api.GET("/project/detail/:name", gitlab.ListDetail)
+
 	}
 }
