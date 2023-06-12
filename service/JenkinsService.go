@@ -38,16 +38,3 @@ func IdJob(name string) (int64, error) {
 	number, err := jenkinsEngine.GetAllBuildIds(helper.Ctx, name)
 	return number[0].Number, err
 }
-
-func StatusJob(name string) string {
-	jenkinsEngine := helper.JkConnect
-	build, err := jenkinsEngine.GetJob(helper.Ctx, name)
-	if err != nil {
-		return "nil"
-	}
-	info, err1 := build.GetLastBuild(helper.Ctx)
-	if err1 != nil {
-		return "nil"
-	}
-	return info.GetResult()
-}

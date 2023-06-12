@@ -1,11 +1,13 @@
 package jenkins
 
 import (
+	"devopscenter/configuration"
 	"devopscenter/model"
 	"devopscenter/service"
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strconv"
 )
 
 //func Build(c *gin.Context) {
@@ -114,22 +116,116 @@ func GetJobId(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-func Status(c *gin.Context) {
+//func Status(c *gin.Context) {
+//	response := model.Res{
+//		Code:    20000,
+//		Message: "successful",
+//		Data:    nil,
+//	}
+//
+//	url := "http://jenkins.chengdd.cn/job/" + c.Query("name") + "/" + c.Query("id") + "/api/json"
+//	fmt.Println(url)
+//	req, err := http.NewRequest("GET", url, nil)
+//	req.SetBasicAuth("yen", "1qaz@WSX")
+//	if err != nil {
+//		response.Message = "Request Failed"
+//		response.Data = err
+//		c.JSON(http.StatusOK, response)
+//		return
+//	}
+//
+//	resp, err1 := (&http.Client{}).Do(req)
+//	if err1 != nil {
+//		response.Data = err1
+//		response.Message = "HttpClient Do Failed"
+//		c.JSON(http.StatusOK, response)
+//		return
+//	}
+//	//body, err2 := ioutil.ReadAll(resp.Body)
+//	//if err2 != nil {
+//	//	response.Data = err2
+//	//	response.Message = "ReadAll Failed"
+//	//	c.JSON(http.StatusOK, response)
+//	//	return
+//	//}
+//	var data struct {
+//		Building bool   `json:"building"`
+//		Result   string `json:"result"`
+//	}
+//	if ok := json.NewDecoder(resp.Body).Decode(&data); ok != nil {
+//		response.Message = "NewDecoder Failed"
+//		response.Data = ok
+//		c.JSON(http.StatusOK, response)
+//		return
+//	}
+//	response.Data = data.Result
+//
+//	//result := service.StatusJob(c.Query("job-name"))
+//	//if result == "" {
+//	//	response.Message = "Build Ing"
+//	//	response.Data = false
+//	//} else if result == "ABORTED" {
+//	//	response.Message = "Build Aborted"
+//	//	response.Data = true
+//	//} else if result == "SUCCESS" {
+//	//	response.Message = "Build Successful"
+//	//	response.Data = true
+//	//} else if result == "FAILURE" {
+//	//	response.Message = "Build Failed"
+//	//	response.Data = true
+//	//}
+//	c.JSON(http.StatusOK, response)
+//}
+
+func StatusV2(c *gin.Context) {
 	response := model.Res{
-		Code:    200,
+		Code:    20000,
 		Message: "successful",
 		Data:    nil,
 	}
-	result := service.StatusJob(c.Query("job-name"))
-	response.Data = result
-	if result == "" {
-		response.Message = "Build Ing"
-	} else if result == "ABORTED" {
-		response.Message = "Build Aborted"
-	} else if result == "SUCCESS" {
-		response.Message = "Build Successful"
-	} else if result == "FAILURE" {
-		response.Message = "Build Failed"
+	url := configuration.Configs.JenkinsUrl + "job/" + c.Param("name") +
+		"/" + c.Param("id") + "/api/json"
+	req, err := http.NewRequest("GET", url, nil)
+	req.SetBasicAuth(configuration.Configs.JenkinsUsername, configuration.Configs.JenkinsPassword)
+	if err != nil {
+		response.Data = err
+		response.Message = "Http Request Failed"
+		c.JSON(http.StatusOK, response)
+		return
 	}
+	resp, err1 := (&http.Client{}).Do(req)
+	if err1 != nil {
+		response.Data = err1
+		response.Message = "HttpClient Do Failed"
+		c.JSON(http.StatusOK, response)
+		return
+	}
+	var data struct {
+		Building bool   `json:"building"`
+		Result   string `json:"result"`
+	}
+	if ok := json.NewDecoder(resp.Body).Decode(&data); ok != nil {
+		response.Message = "NewDecoder Failed"
+		response.Data = ok
+		c.JSON(http.StatusOK, response)
+		return
+	}
+	project := model.ProjectDetail{}
+	if data.Result == "" {
+		data.Result = "ING"
+	} else {
+		jobId, err2 := strconv.Atoi(c.Param("id"))
+		if err2 != nil {
+			response.Data = err2
+			c.JSON(http.StatusOK, response)
+			return
+		}
+		if err3 := project.Update(c.Param("name"), data.Result, jobId); err3 != true {
+			response.Message = "Database Update Failed"
+			c.JSON(http.StatusOK, response)
+			return
+		}
+	}
+	response.Data = data.Result
 	c.JSON(http.StatusOK, response)
 }
