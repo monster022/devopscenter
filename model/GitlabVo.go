@@ -45,6 +45,17 @@ type Project struct {
 	PackageName   string `json:"package_name" db:"package_name"`
 }
 
+type ProjectDetail struct {
+	Id      int    `json:"id"`
+	Name    string `json:"name"`
+	Params  string `json:"params"`
+	Project string `json:"project"`
+	Time    string `json:"time"`
+	Message string `json:"message"`
+	JobName string `json:"job_name"`
+	JobId   int    `json:"job_id"`
+}
+
 func (p *Project) Insert() bool {
 	mysqlEngine := helper.SqlContext
 	var count int
@@ -106,6 +117,33 @@ func (p *Project) Delete(id int) bool {
 func (p *Project) Edit(name, buildPath, packageName string) bool {
 	mysqlEngine := helper.SqlContext
 	_, err := mysqlEngine.Exec("UPDATE project SET build_path=?, package_name=? WHERE project_name=?", buildPath, packageName, name)
+	if err != nil {
+		return false
+	}
+	return true
+}
+
+func (d ProjectDetail) List(project string, page, size int) (data []*ProjectDetail) {
+	mysqlEngine := helper.SqlContext
+	rows, err := mysqlEngine.Query("SELECT id, name, job_name, job_id, params, project, message, time FROM build_info WHERE project = ? ORDER BY id DESC limit ? offset ?", project, size, (page-1)*size)
+	if err == sql.ErrNoRows {
+		log.Printf("Non Rows")
+	}
+	for rows.Next() {
+		obj := &ProjectDetail{}
+		err = rows.Scan(&obj.Id, &obj.Name, &obj.JobName, &obj.JobId, &obj.Params, &obj.Project, &obj.Message, &obj.Time)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		data = append(data, obj)
+	}
+	defer rows.Close()
+	return data
+}
+
+func (d ProjectDetail) Create() bool {
+	mysqlEngine := helper.SqlContext
+	_, err := mysqlEngine.Exec("INSERT INTO build_info(project, name, job_name, job_id, message, params) VALUES (?, ?, ?, ?, ?, ?)", d.Project, d.Name, d.JobName, d.JobId, d.Message, d.Params)
 	if err != nil {
 		return false
 	}

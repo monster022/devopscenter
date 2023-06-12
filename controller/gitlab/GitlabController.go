@@ -223,3 +223,24 @@ func SearchAll(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, response)
 }
+
+func ListDetail(c *gin.Context) {
+	response := model.Res{
+		Code:    20000,
+		Message: "successful",
+		Data:    nil,
+	}
+	projectPage := c.Query("page")
+	projectSize := c.Query("size")
+	page, err1 := strconv.Atoi(projectPage)
+	size, err2 := strconv.Atoi(projectSize)
+	if err1 != nil || err2 != nil {
+		response.Message = "Type Convert Failed"
+		c.JSON(http.StatusOK, response)
+		return
+	}
+	project := model.ProjectDetail{}
+	result := project.List(c.Param("name"), page, size)
+	response.Data = result
+	c.JSON(http.StatusOK, response)
+}
