@@ -13,6 +13,7 @@ func JenkinsRegister(c *gin.Engine) {
 		//	c.Status(http.StatusOK)
 		//})
 		api.GET("/jenkins/job-id", jenkins.GetJobId)
-		api.GET("/jenkins/job-status", jenkins.Status)
+		//api.GET("/jenkins/job-status", jenkins.Status)
+		api.GET("/jenkins/:name/:id", jenkins.StatusV2)
 	}
 }

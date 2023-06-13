@@ -61,7 +61,7 @@ func RecordBuildInfo(params *model.JenkinsTemplate, marshalData string, jobId in
 	data.Params = marshalData
 	data.JobName = params.Language + "_Template"
 	data.JobId = jobId + 1
-	data.Message = "ing"
+	data.Message = "ING"
 	if !data.Create() {
 		return false
 	}

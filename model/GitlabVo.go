@@ -149,3 +149,12 @@ func (d ProjectDetail) Create() bool {
 	}
 	return true
 }
+
+func (d ProjectDetail) Update(jobName, status string, jobId int) bool {
+	mysqlEngine := helper.SqlContext
+	_, err := mysqlEngine.Exec("UPDATE build_info SET message=? WHERE job_id=? AND job_name=?", status, jobId, jobName)
+	if err != nil {
+		return false
+	}
+	return true
+}
