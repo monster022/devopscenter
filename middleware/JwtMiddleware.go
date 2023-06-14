@@ -20,6 +20,7 @@ func JwtAuth() gin.HandlerFunc {
 		tokenString := c.Request.Header.Get("Authorization")
 
 		if tokenString == "" {
+			response.Code = 40001
 			response.Message = "Authorization header required"
 			c.JSON(http.StatusUnauthorized, response)
 			c.Abort()
@@ -34,6 +35,7 @@ func JwtAuth() gin.HandlerFunc {
 		})
 
 		if err != nil {
+			response.Code = 40001
 			response.Message = "Invalid token"
 			c.JSON(http.StatusUnauthorized, response)
 			c.Abort()
@@ -44,6 +46,7 @@ func JwtAuth() gin.HandlerFunc {
 			c.Set("username", claims.Username)
 			c.Next()
 		} else {
+			response.Code = 40001
 			response.Message = "Invalid token"
 			c.JSON(http.StatusUnauthorized, response)
 			c.Abort()
