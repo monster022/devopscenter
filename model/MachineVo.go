@@ -81,6 +81,12 @@ func (m *Machine) Update() (result sql.Result, err error) {
 	return result, err
 }
 
+func (m Machine) PatchName(id int, name string) (result sql.Result, err error) {
+	mysqlEngine := helper.SqlContext
+	result, err = mysqlEngine.Exec("UPDATE machine SET instance_name = ? WHERE id = ?", name, id)
+	return result, err
+}
+
 func (m *Machine) PasswordList(id int) (p string) {
 	mysqlEngine := helper.SqlContext
 	mysqlEngine.QueryRow("select instance_password from machine where id = ?", id).Scan(&p)

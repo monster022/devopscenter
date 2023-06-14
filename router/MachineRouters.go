@@ -13,5 +13,6 @@ func MachineRegister(c *gin.Engine) {
 		api.POST("/machine", machine.Create)
 		api.DELETE("/machine", machine.Remove)
 		api.PUT("/machine", machine.Update)
+		api.PATCH("/machine/:id", machine.PatchName)
 	}
 }

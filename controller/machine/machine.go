@@ -64,7 +64,7 @@ func Password(c *gin.Context) {
 
 func Create(c *gin.Context) {
 	response := model.Res{
-		Code:    201,
+		Code:    20000,
 		Message: "Successful",
 		Data:    nil,
 	}
@@ -133,4 +133,29 @@ func Update(c *gin.Context) {
 	}
 	response.Data = result
 	c.JSON(http.StatusCreated, response)
+}
+
+func PatchName(c *gin.Context) {
+	response := model.Res{
+		Code:    20000,
+		Message: "successful",
+		Data:    nil,
+	}
+	machine := model.Machine{}
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		response.Data = err
+		response.Message = "Type Convert Failed"
+		c.JSON(http.StatusOK, response)
+		return
+	}
+	if result, ok := machine.PatchName(id, c.Query("name")); ok != nil {
+		response.Data = result
+		response.Message = "Databases Exec Failed"
+		c.JSON(http.StatusOK, response)
+		return
+	} else {
+		response.Data = result
+		c.JSON(http.StatusOK, response)
+	}
 }
