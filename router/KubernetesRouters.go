@@ -2,33 +2,34 @@ package router
 
 import (
 	"devopscenter/controller/kubernetes"
+	"devopscenter/middleware"
 	"github.com/gin-gonic/gin"
 )
 
 func KubernetesRegister(c *gin.Engine) {
 	api := c.Group("/devops")
 	{
-		api.GET("/namespaces", kubernetes.NsList)
+		api.GET("/namespaces", middleware.JwtAuth(), kubernetes.NsList)
 
-		api.GET("/deployment", kubernetes.DeployList)
-		api.GET("/deployment/:name", kubernetes.DeployGet)
-		api.GET("/deploymentV2", kubernetes.DeployListV2)
-		api.PATCH("/deployment", kubernetes.DeployPatch)
-		api.POST("/deployment", kubernetes.DeployAdd)
+		api.GET("/deployment", middleware.JwtAuth(), kubernetes.DeployList)
+		api.GET("/deployment/:name", middleware.JwtAuth(), kubernetes.DeployGet)
+		api.GET("/deploymentV2", middleware.JwtAuth(), kubernetes.DeployListV2)
+		api.PATCH("/deployment", middleware.JwtAuth(), kubernetes.DeployPatch)
+		api.POST("/deployment", middleware.JwtAuth(), kubernetes.DeployAdd)
 
-		api.GET("/ingress", kubernetes.IngressList)
-		api.GET("/ingressV2", kubernetes.IngressListV2)
-		api.DELETE("/ingress", kubernetes.IngressDelete)
+		api.GET("/ingress", middleware.JwtAuth(), kubernetes.IngressList)
+		api.GET("/ingressV2", middleware.JwtAuth(), kubernetes.IngressListV2)
+		api.DELETE("/ingress", middleware.JwtAuth(), kubernetes.IngressDelete)
 
-		api.GET("/services", kubernetes.ServiceList)
-		api.GET("/servicesV2", kubernetes.ServiceListV2)
-		api.DELETE("/services", kubernetes.ServiceDelete)
-		api.POST("/services", kubernetes.ServiceCreate)
+		api.GET("/services", middleware.JwtAuth(), kubernetes.ServiceList)
+		api.GET("/servicesV2", middleware.JwtAuth(), kubernetes.ServiceListV2)
+		api.DELETE("/services", middleware.JwtAuth(), kubernetes.ServiceDelete)
+		api.POST("/services", middleware.JwtAuth(), kubernetes.ServiceCreate)
 
-		api.GET("/cronjob", kubernetes.CronJobList)
-		api.GET("/cronjobV2", kubernetes.CronJobListV2)
+		api.GET("/cronjob", middleware.JwtAuth(), kubernetes.CronJobList)
+		api.GET("/cronjobV2", middleware.JwtAuth(), kubernetes.CronJobListV2)
 
-		api.GET("/configmap", kubernetes.ConfigMapList)
-		api.POST("/configmap", kubernetes.ConfigMapAdd)
+		api.GET("/configmap", middleware.JwtAuth(), kubernetes.ConfigMapList)
+		api.POST("/configmap", middleware.JwtAuth(), kubernetes.ConfigMapAdd)
 	}
 }
