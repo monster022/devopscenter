@@ -24,5 +24,6 @@ func BaseRegister(c *gin.Engine) {
 	api := c.Group("/devops/")
 	{
 		api.POST("/login", login.Auth)
+		api.POST("/password", middleware.JwtAuth(), login.ModifyPassword)
 	}
 }
