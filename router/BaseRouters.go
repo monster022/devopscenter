@@ -1,6 +1,7 @@
 package router
 
 import (
+	"devopscenter/controller/authority"
 	"devopscenter/controller/base"
 	"devopscenter/controller/login"
 	"devopscenter/middleware"
@@ -23,6 +24,7 @@ func BaseRegister(c *gin.Engine) {
 
 	api := c.Group("/devops/")
 	{
+		api.GET("/menu/:name", authority.List)
 
 		api.POST("/login", login.Auth)
 		api.POST("/password", middleware.JwtAuth(), login.ModifyPassword)
