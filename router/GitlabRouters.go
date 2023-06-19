@@ -16,6 +16,7 @@ func GitlabRegister(c *gin.Engine) {
 		api.PATCH("/project/:name", middleware.JwtAuth(), gitlab.EditPatch)
 
 		api.GET("/project/branch", middleware.JwtAuth(), gitlab.BranchList)
+		api.GET("/project/:pid/commit", gitlab.CommitMessage)
 
 		api.GET("/project/search", middleware.JwtAuth(), gitlab.Search)
 		api.GET("/project/search/all", middleware.JwtAuth(), gitlab.SearchAll)

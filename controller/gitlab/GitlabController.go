@@ -160,7 +160,7 @@ func BranchList(c *gin.Context) {
 	id, err1 := strconv.Atoi(projectId)
 	if err1 != nil {
 		response.Message = "Type Convert Failed"
-		response.Data = err1
+		response.Data = err1.Error()
 		c.JSON(http.StatusOK, response)
 		return
 	}
@@ -171,6 +171,30 @@ func BranchList(c *gin.Context) {
 		c.JSON(http.StatusOK, response)
 		return
 	}
+	c.JSON(http.StatusOK, response)
+}
+
+func CommitMessage(c *gin.Context) {
+	response := model.Res{
+		Code:    20000,
+		Message: "successful",
+		Data:    nil,
+	}
+	commit, err := service.CommitByIdAndBranch(c.Param("pid"), c.Query("branch"))
+	if err != nil {
+		response.Message = "Failed"
+		response.Data = err.Error()
+		c.JSON(http.StatusOK, response)
+		return
+	}
+	message := struct {
+		AuthorName string `json:"authorName"`
+		Message    string `json:"message"`
+	}{
+		AuthorName: commit.AuthorName,
+		Message:    commit.Title,
+	}
+	response.Data = message
 	c.JSON(http.StatusOK, response)
 }
 
@@ -187,16 +211,23 @@ func Search(c *gin.Context) {
 		return
 	}
 	result, pid, repo, err := service.SearchName(project)
-	if result == false || err != nil {
+	if err != nil {
+		response.Message = "Internal Server Error"
+		response.Data = err.Error()
+		c.JSON(http.StatusOK, response)
+		return
+	}
+	if !result {
 		response.Message = "Project Not Exist"
 		response.Data = err
 		c.JSON(http.StatusOK, response)
 		return
 	}
-	data := make(map[string]interface{})
-	data["id"] = pid
-	data["repo"] = repo
-	data["name"] = project
+	data := map[string]interface{}{
+		"id":   pid,
+		"repo": repo,
+		"name": project,
+	}
 	response.Message = "Project Exist"
 	response.Data = data
 	c.JSON(http.StatusOK, response)

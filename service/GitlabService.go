@@ -67,3 +67,9 @@ func RecordBuildInfo(params *model.JenkinsTemplate, marshalData string, jobId in
 	}
 	return true
 }
+
+func CommitByIdAndBranch(pid, branch string) (*gitlab.Commit, error) {
+	gitEngine := helper.GitConnect
+	commit, _, err := gitEngine.Commits.GetCommit(pid, branch)
+	return commit, err
+}
