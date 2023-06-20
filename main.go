@@ -29,6 +29,7 @@ func main() {
 
 	router.BaseRegister(app)
 	router.MachineRegister(app)
+	router.OrderRegister(app)
 	router.GitlabRegister(app)
 	router.JenkinsRegister(app)
 	router.HarborRegister(app)
