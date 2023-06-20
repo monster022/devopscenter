@@ -2,6 +2,7 @@ package order
 
 import (
 	"devopscenter/model"
+	"devopscenter/utils"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -149,6 +150,11 @@ func PatchOrder(c *gin.Context) {
 		c.JSON(http.StatusOK, response)
 		return
 	}
+	//if ok := utils.Alter(order.NameByOrderId(id), "您的待办事项已处理，请及时查看"); ok == 0 {
+	//	response.Message = "FeishuTalk Notify Failed"
+	//	c.JSON(http.StatusOK, response)
+	//	return
+	//}
 	response.Data = true
 	c.JSON(http.StatusOK, response)
 }
@@ -184,6 +190,13 @@ func PostOrder(c *gin.Context) {
 		c.JSON(http.StatusOK, response)
 		return
 	}
+
+	//if ok := utils.Alter(order.NameByOrderId(id), "您的待办事项已处理，请及时查看"); ok == 0 {
+	//	response.Message = "FeishuTalk Notify Failed"
+	//	c.JSON(http.StatusOK, response)
+	//	return
+	//}
+
 	response.Data = true
 	c.JSON(http.StatusOK, response)
 }
@@ -206,6 +219,11 @@ func Create(c *gin.Context) {
 	if err != nil {
 		response.Data = err.Error()
 		response.Message = "Sql Exec Failed"
+		c.JSON(http.StatusOK, response)
+		return
+	}
+	if ok := utils.Alter(orderRequestBody.TackleName, "您有新的待办事项，请及时处理"); ok == 0 {
+		response.Message = "FeishuTalk Notify Failed"
 		c.JSON(http.StatusOK, response)
 		return
 	}

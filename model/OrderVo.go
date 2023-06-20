@@ -60,11 +60,11 @@ func (o Order) ListTackleName(page, size int, tackleName string) ([]*Order, erro
 }
 
 func (o Order) ListTackleNameCount(tackleName string) (total int, err error) {
-	queryDoing := "select count(*) from `order` WHERE tackleName = ? AND status in ('doing', 'await')"
+	query := "select count(*) from `order` WHERE tackleName = ? AND status in ('doing', 'await')"
 	mysqlEngine := helper.SqlContext
-	err = mysqlEngine.QueryRow(queryDoing, tackleName).Scan(&total)
+	err = mysqlEngine.QueryRow(query, tackleName).Scan(&total)
 	if err != nil {
-		return 0, err
+		return -1, err
 	}
 	return total, nil
 }
