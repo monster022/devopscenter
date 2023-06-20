@@ -21,7 +21,6 @@ func BaseRegister(c *gin.Engine) {
 	c.POST("/base/from-data", base.PostForm)
 	c.DELETE("/base", base.Delete)
 	c.PATCH("/base", base.Patch)
-
 	api := c.Group("/devops/")
 	{
 		api.GET("/menu/:name", authority.List)

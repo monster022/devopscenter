@@ -27,6 +27,7 @@ func main() {
 	// 日志中间件
 	app.Use(middleware.Log())
 
+	router.WebsocketRegister(app)
 	router.BaseRegister(app)
 	router.MachineRegister(app)
 	router.OrderRegister(app)
