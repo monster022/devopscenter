@@ -115,7 +115,7 @@ func (o Order) PostOrderStatusReject(orderId int, status, rejectReason string) (
 
 func (o Order) CreateOrder(data *OrderRequestBody) (sql.Result, error) {
 	mysqlEngine := helper.SqlContext
-	stmt, err := mysqlEngine.Prepare("INSERT INTO `order` (`submitName`, `priority`, `message`, `tackleName`, `status`, `rejectReason`) VALUES (?, ?, ?, ?, 'await', 'none')")
+	stmt, err := mysqlEngine.Prepare("INSERT INTO `order` (`submitName`, `priority`, `message`, `tackleName`, `status`, `rejectReason`) VALUES (?, ?, ?, ?, 'await', ' ')")
 	if err != nil {
 		return nil, err
 	}
