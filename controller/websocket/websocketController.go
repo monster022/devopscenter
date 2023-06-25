@@ -6,14 +6,14 @@ import (
 	"net/http"
 )
 
-var upgrader = websocket.Upgrader{
+var upgrades = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
 		return true
 	},
 }
 
 func Demo(c *gin.Context) {
-	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	ws, err := upgrades.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		return
 	}
@@ -23,7 +23,7 @@ func Demo(c *gin.Context) {
 		if err != nil {
 			break
 		}
-		message = []byte("sss")
+		//message = []byte("sss")
 		//write ws data
 		err = ws.WriteMessage(mt, message)
 		if err != nil {
