@@ -24,6 +24,7 @@ type Configuration struct {
 	HarborPassword  string `ini:"harbor_password"`
 	LdapPort        string `ini:"ldap_port"`
 	LdapHost        string `ini:"ldap_host"`
+	FeishuTalk      string `ini:"feishu_talk"`
 }
 
 var Configs = Configuration{}

@@ -205,3 +205,20 @@ func DeployAdd(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, response)
 }
+
+func PodList(c *gin.Context) {
+	response := model.Res{
+		Code:    20000,
+		Message: "successful",
+		Data:    nil,
+	}
+	podList, err := service.PodList(c.Param("env")+"config", c.Param("namespace"))
+	if err != nil {
+		response.Message = "Failed"
+		response.Data = err.Error()
+		c.JSON(http.StatusOK, response)
+		return
+	}
+	response.Data = podList
+	c.JSON(http.StatusOK, response)
+}

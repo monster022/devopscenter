@@ -17,6 +17,8 @@ func KubernetesRegister(c *gin.Engine) {
 		api.PATCH("/deployment", middleware.JwtAuth(), kubernetes.DeployPatch)
 		api.POST("/deployment", middleware.JwtAuth(), kubernetes.DeployAdd)
 
+		api.GET("/pod/:env/:namespace", kubernetes.PodList)
+
 		api.GET("/ingress", middleware.JwtAuth(), kubernetes.IngressList)
 		api.GET("/ingressV2", middleware.JwtAuth(), kubernetes.IngressListV2)
 		api.DELETE("/ingress", middleware.JwtAuth(), kubernetes.IngressDelete)
