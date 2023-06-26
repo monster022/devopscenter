@@ -28,6 +28,7 @@ func BuildJob(name string, data *model.JenkinsTemplate) (int64, error) {
 		"Package_Name":         data.PackageName,
 		"Environment_Unique":   data.Env,
 		"Image_Source":         data.ImageSource,
+		"AliasName":            data.AliasName,
 		"Create_By":            data.CreateBy,
 	}
 	result, err := jenkinsEngine.BuildJob(helper.Ctx, name, params)

@@ -21,7 +21,7 @@ func Create(c *gin.Context) {
 		c.JSON(http.StatusCreated, response)
 		return
 	}
-	//
+	// gitlab中查找该项目
 	result, pid, repo, err1 := service.SearchName(data.Name)
 	if result == false || err1 != nil {
 		response.Message = "Project Not Exist"
@@ -29,6 +29,7 @@ func Create(c *gin.Context) {
 		c.JSON(http.StatusOK, response)
 		return
 	}
+	// 数据库中添加项目
 	project := model.Project{}
 	project.ProjectId = pid
 	project.ProjectName = data.Name
@@ -37,6 +38,7 @@ func Create(c *gin.Context) {
 	project.Language = data.Language
 	project.BuildPath = data.BuildPath
 	project.PackageName = data.PackageName
+	project.AliasName = data.AliasName
 	result1 := project.Insert()
 	response.Data = result1
 	if result1 == false {
