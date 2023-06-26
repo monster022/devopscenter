@@ -9,6 +9,7 @@ import (
 
 type Application struct {
 	Name        string `json:"name"`
+	AliasName   string `json:"alias_name"`
 	Language    string `json:"language"`
 	BuildPath   string `json:"build_path"`
 	PackageName string `json:"package_name"`
@@ -39,7 +40,7 @@ type Project struct {
 	ProjectName   string `json:"project_name" db:"project_name"`
 	ProjectRepo   string `json:"project_repo" db:"project_repo"`
 	ProjectStatus int    `json:"project_status" db:"project_status"`
-	ProjectNumber int    `json:"project_number" db:"project_number"`
+	AliasName     string `json:"alias_name" db:"alias_name"`
 	Language      string `json:"language" db:"language"`
 	BuildPath     string `json:"build_path" db:"build_path"`
 	PackageName   string `json:"package_name" db:"package_name"`
@@ -59,12 +60,13 @@ type ProjectDetail struct {
 func (p *Project) Insert() bool {
 	mysqlEngine := helper.SqlContext
 	var count int
-	mysqlEngine.QueryRow("select count(*) from project where project_name = ?", p.ProjectName).Scan(&count)
+	// 通过 别名  判断数据库中是否重复添加
+	mysqlEngine.QueryRow("select count(*) from project where alias_name = ?", p.AliasName).Scan(&count)
 	if count != 0 {
 		return false
 	}
-	_, err := mysqlEngine.Exec("insert into project(project_id, project_name, project_repo, project_status, project_number, language, build_path, package_name) values (?, ?, ?, ?, ?, ?, ?, ?)",
-		p.ProjectId, p.ProjectName, p.ProjectRepo, p.ProjectStatus, p.ProjectNumber, p.Language, p.BuildPath, p.PackageName)
+	_, err := mysqlEngine.Exec("insert into project(project_id, project_name, project_repo, project_status, alias_name, language, build_path, package_name) values (?, ?, ?, ?, ?, ?, ?, ?)",
+		p.ProjectId, p.ProjectName, p.ProjectRepo, p.ProjectStatus, p.AliasName, p.Language, p.BuildPath, p.PackageName)
 	if err != nil {
 		return false
 	}
@@ -89,7 +91,7 @@ func (p *Project) List(page int, size int) (data []*Project) {
 	}
 	for rows.Next() {
 		obj := &Project{}
-		err = rows.Scan(&obj.Id, &obj.ProjectId, &obj.ProjectName, &obj.ProjectRepo, &obj.ProjectStatus, &obj.ProjectNumber, &obj.Language, &obj.BuildPath, &obj.PackageName)
+		err = rows.Scan(&obj.Id, &obj.ProjectId, &obj.ProjectName, &obj.ProjectRepo, &obj.ProjectStatus, &obj.AliasName, &obj.Language, &obj.BuildPath, &obj.PackageName)
 		if err != nil {
 			log.Fatalln(err)
 		}
