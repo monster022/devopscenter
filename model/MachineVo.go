@@ -92,3 +92,13 @@ func (m *Machine) PasswordList(id int) (p string) {
 	mysqlEngine.QueryRow("select instance_password from machine where id = ?", id).Scan(&p)
 	return p
 }
+
+func (m *Machine) PasswordByIp(ip string) (string, error) {
+	var password string
+	query := "SELECT instance_password FROM machine WHERE instance_ip = ?"
+	err := helper.SqlContext.QueryRow(query, ip).Scan(&password)
+	if err != nil {
+		return "", err
+	}
+	return password, nil
+}
