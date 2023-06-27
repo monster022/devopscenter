@@ -1,7 +1,7 @@
 # DevopsCenter
 
 ## Introduce
-$Automated$ $Publishing$ $Platform$
+$Automated$ $Publishing$ $Platform$  
 Currently supported projects are `Dotnet` `GoLang` and `Vue`
 
 ### Dotnet project structure
