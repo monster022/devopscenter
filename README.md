@@ -1,10 +1,14 @@
 # DevopsCenter
 
 ## Introduce
-$Automated$ $Publishing$ $Platform$  
+$Automated$ $Publishing$ $Platform$
+### Project
 ![Project](https://github.com/monster022/staticResource/blob/main/Images/ProjectTable.jpg)
+### Machine
 ![Machine](https://github.com/monster022/staticResource/blob/main/Images/MachineTable.jpg)
+### ToDoList
 ![ToDoList](https://github.com/monster022/staticResource/blob/main/Images/ToDoListTable.jpg)
+
 Currently supported projects are `Dotnet` `GoLang` and `Vue`
 
 ### Dotnet project structure
