@@ -214,6 +214,8 @@ ADD ./dist ./ \" > Dockerfile
     }
 }
 ```
+> Tips:
+> Adding different languages and different pipeline scripts can realize the release of different projects
 
 ## Installation
 ### Requirement
