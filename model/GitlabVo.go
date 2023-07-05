@@ -60,6 +60,7 @@ type ProjectDetail struct {
 type DeployProjectDetail struct {
 	Id        int    `json:"id"`
 	Project   string `json:"project"`
+	CommitID  string `json:"commit_id"`
 	Env       string `json:"env"`
 	Name      string `json:"name"`
 	Namespace string `json:"namespace"`
@@ -181,7 +182,7 @@ func (d DeployProjectDetail) List(project string, page, size int) ([]*DeployProj
 	data := make([]*DeployProjectDetail, 0)
 	for rows.Next() {
 		var obj = &DeployProjectDetail{}
-		if ok := rows.Scan(&obj.Id, &obj.Project, &obj.Env, &obj.Name, &obj.Namespace, &obj.Version, &obj.Time); ok != nil {
+		if ok := rows.Scan(&obj.Id, &obj.Project, &obj.CommitID, &obj.Env, &obj.Name, &obj.Namespace, &obj.Version, &obj.Time); ok != nil {
 			return nil, ok
 		}
 		data = append(data, obj)
@@ -189,13 +190,13 @@ func (d DeployProjectDetail) List(project string, page, size int) ([]*DeployProj
 	return data, nil
 }
 
-func (d DeployProjectDetail) CreateDeployInfo(project, env, name, namespace, version string) (sql.Result, error) {
+func (d DeployProjectDetail) CreateDeployInfo(project, commitId, env, name, namespace, version string) (sql.Result, error) {
 	mysqlEngine := helper.SqlContext
-	stmt, err := mysqlEngine.Prepare("INSERT INTO deploy_info (`project`, `env`, `name`, `namespace`, `version`) VALUES (?, ?, ?, ?, ?)")
+	stmt, err := mysqlEngine.Prepare("INSERT INTO deploy_info (`project`, `commit_id`, `env`, `name`, `namespace`, `version`) VALUES (?, ?, ?, ?, ?, ?)")
 	if err != nil {
 		return nil, err
 	}
-	result, err := stmt.Exec(project, env, name, namespace, version)
+	result, err := stmt.Exec(project, commitId, env, name, namespace, version)
 	if err != nil {
 		return nil, err
 	}

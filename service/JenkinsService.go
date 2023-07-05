@@ -23,6 +23,7 @@ func BuildJob(name string, data *model.JenkinsTemplate) (int64, error) {
 		"Dependent_Project":    data.DependentProject,
 		"Sub_Name":             data.SubName,
 		"Branch":               data.Branch,
+		"ShortID":              data.ShortID,
 		"Dependent_Branch":     data.DependentBranch,
 		"Build_Path":           data.BuildPath,
 		"Package_Name":         data.PackageName,

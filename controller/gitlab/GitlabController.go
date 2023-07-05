@@ -192,9 +192,11 @@ func CommitMessage(c *gin.Context) {
 	message := struct {
 		AuthorName string `json:"authorName"`
 		Message    string `json:"message"`
+		ShortID    string `json:"short_id"`
 	}{
 		AuthorName: commit.AuthorName,
 		Message:    commit.Title,
+		ShortID:    commit.ShortID,
 	}
 	response.Data = message
 	c.JSON(http.StatusOK, response)
@@ -296,6 +298,8 @@ func ListDeployDetail(c *gin.Context) {
 	deployProject := model.DeployProjectDetail{}
 	result, err := deployProject.List(c.Param("name"), page, size)
 	if err != nil {
+		response.Message = "数据库执行失败"
+		response.Data = err.Error()
 		c.JSON(http.StatusOK, response)
 		return
 	}
