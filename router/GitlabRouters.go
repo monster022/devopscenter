@@ -21,7 +21,7 @@ func GitlabRegister(c *gin.Engine) {
 		api.GET("/project/search", middleware.JwtAuth(), gitlab.Search)
 		api.GET("/project/search/all", middleware.JwtAuth(), gitlab.SearchAll)
 
-		api.GET("/project/detail/:name", middleware.JwtAuth(), gitlab.ListDetail)
-
+		api.GET("/project/build/detail/:name", middleware.JwtAuth(), gitlab.ListDetail)
+		api.GET("/project/deploy/detail/:name", middleware.JwtAuth(), gitlab.ListDeployDetail)
 	}
 }

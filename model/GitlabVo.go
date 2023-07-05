@@ -57,6 +57,16 @@ type ProjectDetail struct {
 	JobId   int    `json:"job_id"`
 }
 
+type DeployProjectDetail struct {
+	Id        int    `json:"id"`
+	Project   string `json:"project"`
+	Env       string `json:"env"`
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+	Version   string `json:"version"`
+	Time      string `json:"time"`
+}
+
 func (p *Project) Insert() bool {
 	mysqlEngine := helper.SqlContext
 	var count int
@@ -159,4 +169,35 @@ func (d ProjectDetail) Update(jobName, status string, jobId int) bool {
 		return false
 	}
 	return true
+}
+
+func (d DeployProjectDetail) List(project string, page, size int) ([]*DeployProjectDetail, error) {
+	query := "SELECT * FROM deploy_info WHERE project=? ORDER BY id DESC LIMIT ? OFFSET ?"
+	mysqlEngine := helper.SqlContext
+	rows, err := mysqlEngine.Query(query, project, size, (page-1)*size)
+	if err != nil {
+		return nil, err
+	}
+	data := make([]*DeployProjectDetail, 0)
+	for rows.Next() {
+		var obj = &DeployProjectDetail{}
+		if ok := rows.Scan(&obj.Id, &obj.Project, &obj.Env, &obj.Name, &obj.Namespace, &obj.Version, &obj.Time); ok != nil {
+			return nil, ok
+		}
+		data = append(data, obj)
+	}
+	return data, nil
+}
+
+func (d DeployProjectDetail) CreateDeployInfo(project, env, name, namespace, version string) (sql.Result, error) {
+	mysqlEngine := helper.SqlContext
+	stmt, err := mysqlEngine.Prepare("INSERT INTO deploy_info (`project`, `env`, `name`, `namespace`, `version`) VALUES (?, ?, ?, ?, ?)")
+	if err != nil {
+		return nil, err
+	}
+	result, err := stmt.Exec(project, env, name, namespace, version)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
