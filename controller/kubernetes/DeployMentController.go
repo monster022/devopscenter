@@ -9,6 +9,7 @@ import (
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 func DeployList(c *gin.Context) {
@@ -123,6 +124,18 @@ func DeployPatch(c *gin.Context) {
 		c.JSON(http.StatusOK, response)
 		return
 	}
+
+	// 记录数据库发布的版本
+	deployInfo := model.DeployProjectDetail{}
+	commitId := strings.Split(data.ImageSource, "-")
+	_, err := deployInfo.CreateDeployInfo(data.DeploymentName, commitId[1], data.Env, data.CreateBy, data.Namespace, data.ImageSource)
+	if err != nil {
+		response.Message = "发布历史记录数据库失败"
+		response.Data = err.Error()
+		c.JSON(http.StatusOK, response)
+		return
+	}
+
 	deploy := model.Deployment{}
 	number := deploy.ImagePatch(data.ImageSource, data.Env, data.Namespace, data.DeploymentName)
 	response.Data = number

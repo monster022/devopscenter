@@ -26,3 +26,5 @@ logs/
 Sql/
 #idea
 .idea
+#config
+config.ini

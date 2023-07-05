@@ -15,6 +15,7 @@ type JenkinsTemplate struct {
 	DependentProject    string `json:"dependent_project"`
 	SubName             string `json:"sub_name"`
 	Branch              string `json:"branch"`
+	ShortID             string `json:"short_id"`
 	DependentBranch     string `json:"dependent_branch"`
 	BuildPath           string `json:"build_path"`
 	PackageName         string `json:"package_name"`

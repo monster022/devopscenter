@@ -192,9 +192,11 @@ func CommitMessage(c *gin.Context) {
 	message := struct {
 		AuthorName string `json:"authorName"`
 		Message    string `json:"message"`
+		ShortID    string `json:"short_id"`
 	}{
 		AuthorName: commit.AuthorName,
 		Message:    commit.Title,
+		ShortID:    commit.ShortID,
 	}
 	response.Data = message
 	c.JSON(http.StatusOK, response)
@@ -274,6 +276,33 @@ func ListDetail(c *gin.Context) {
 	}
 	project := model.ProjectDetail{}
 	result := project.List(c.Param("name"), page, size)
+	response.Data = result
+	c.JSON(http.StatusOK, response)
+}
+
+func ListDeployDetail(c *gin.Context) {
+	response := model.Res{
+		Code:    20000,
+		Message: "successful",
+		Data:    nil,
+	}
+	projectPage := c.Query("page")
+	projectSize := c.Query("size")
+	page, err1 := strconv.Atoi(projectPage)
+	size, err2 := strconv.Atoi(projectSize)
+	if err1 != nil || err2 != nil {
+		response.Message = "Type Convert Failed"
+		c.JSON(http.StatusOK, response)
+		return
+	}
+	deployProject := model.DeployProjectDetail{}
+	result, err := deployProject.List(c.Param("name"), page, size)
+	if err != nil {
+		response.Message = "数据库执行失败"
+		response.Data = err.Error()
+		c.JSON(http.StatusOK, response)
+		return
+	}
 	response.Data = result
 	c.JSON(http.StatusOK, response)
 }
