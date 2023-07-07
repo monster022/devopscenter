@@ -35,5 +35,6 @@ func main() {
 	router.JenkinsRegister(app)
 	router.HarborRegister(app)
 	router.KubernetesRegister(app)
+	router.DockerRegister(app)
 	app.Run("0.0.0.0:" + configuration.Configs.ServerPort)
 }
