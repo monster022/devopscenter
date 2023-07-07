@@ -25,6 +25,7 @@ type Configuration struct {
 	LdapPort        string `ini:"ldap_port"`
 	LdapHost        string `ini:"ldap_host"`
 	FeishuTalk      string `ini:"feishu_talk"`
+	DockerPort      string `ini:"docker_port"`
 }
 
 var Configs = Configuration{}
