@@ -96,11 +96,8 @@ func DeleteContainer(machine, containerName string, statusChan chan int) {
 		return
 	}
 	ContainerDeleteClient := &http.Client{}
-	ContainerDeleteRes, err := ContainerDeleteClient.Do(ContainerDeleteReq)
-	if err != nil {
-		statusChan <- 2
-		return
-	}
+	ContainerDeleteRes, _ := ContainerDeleteClient.Do(ContainerDeleteReq)
+
 	if ContainerDeleteRes.StatusCode == http.StatusNotFound {
 		statusChan <- 88
 		return
