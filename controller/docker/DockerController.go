@@ -5,6 +5,7 @@ import (
 	"devopscenter/service"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -77,5 +78,31 @@ func Create(c *gin.Context) {
 	wgContainerStart.Wait()
 
 	response.Data = true
+	c.JSON(http.StatusOK, response)
+}
+
+func Machine(c *gin.Context) {
+	response := model.Res{
+		Code:    20000,
+		Message: "successful",
+		Data:    nil,
+	}
+	pubMachine := model.PubMachine{}
+	idParam := c.Param("id")
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		response.Data = err.Error()
+		response.Message = idParam + "类型转换失败"
+		c.JSON(http.StatusOK, response)
+		return
+	}
+	data, err := pubMachine.List(id)
+	if err != nil {
+		response.Data = err.Error()
+		response.Message = "数据库查询失败"
+		c.JSON(http.StatusOK, response)
+		return
+	}
+	response.Data = data
 	c.JSON(http.StatusOK, response)
 }
