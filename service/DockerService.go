@@ -3,21 +3,59 @@ package service
 import (
 	"bytes"
 	"devopscenter/configuration"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
+	"sync"
+	"time"
 )
 
-func CreateContainer(machine, Hostname, AspEnvironment, Image, HostPort string, statusChan chan int) {
-	// 创建容器，0 表示创建时失败
-	ContainerCreateUrl := "http://" + machine + ":" + configuration.Configs.DockerPort + "/containers/create?name=" + Hostname
+func ImagePull(machine, fromImage, tag string, wgImagePull *sync.WaitGroup) {
+	defer wgImagePull.Done()
+	URL := "http://" + machine + ":2375/images/create?fromImage=" + url.QueryEscape(fromImage) + "&tag=" + tag
+	req, err := http.NewRequest("POST", URL, nil)
+	println(configuration.Configs.DockerPort)
+	if err != nil {
+		println("ImagePull 函数 NewRequest的时候错了")
+	}
+	req.Header.Set("Content-Type", "application/json")
+	Client := &http.Client{}
+	res, err := Client.Do(req)
+	if err != nil {
+		println("ImagePull 函数发送请求失败")
+	}
+	defer res.Body.Close()
+	data, _ := ioutil.ReadAll(res.Body)
+	println("ImagePull 返回信息：" + string(data))
+	println("ImagePull 函数发送http请求下载镜像, 状态码为: " + res.Status)
+}
+
+func ContainerDelete(machine, containerName string, wgContainerDelete *sync.WaitGroup) {
+	defer wgContainerDelete.Done()
+	req, err := http.NewRequest("DELETE", "http://"+machine+":2375/containers/"+containerName+"?force=1", nil)
+	if err != nil {
+		println("workerDelete 函数 NewRequest的时候错了")
+	}
+	Client := &http.Client{}
+	res, err := Client.Do(req)
+	if err != nil {
+		println("ContainerDelete 发送请求失败")
+	}
+	defer res.Body.Close()
+	data, _ := ioutil.ReadAll(res.Body)
+	println("ContainerDelete 返回信息：" + string(data))
+	println("ContainerDelete 函数发送http请求删除容器, 状态码为: " + res.Status)
+}
+
+func ContainerCreate(machine, aspEnvironment, image, containerName, containerPort string, wgContainerCreate *sync.WaitGroup) {
+	defer wgContainerCreate.Done()
 	jsonBody := []byte(fmt.Sprintf(`{
-		"Hostname": "%s",
+		"Hostname":"%s",
 		"User": "root",
-		"Env": [
+    	"Env": [
         	"ASPNETCORE_ENVIRONMENT=%s"
-		],
+    	],
 		"ExposedPorts": {
 	 		"80/tcp": {}
 	 	},
@@ -40,71 +78,36 @@ func CreateContainer(machine, Hostname, AspEnvironment, Image, HostPort string, 
 			},
 			"Privileged": true
 		}
-	}`, Hostname, AspEnvironment, Image, AspEnvironment, HostPort))
-	ContainerCreateReq, err := http.NewRequest("POST", ContainerCreateUrl, bytes.NewBuffer(jsonBody))
+	}`, containerName, aspEnvironment, image, containerName, containerPort))
+	req, err := http.NewRequest("POST", "http://"+machine+":2375/containers/create?name="+containerName, bytes.NewBuffer(jsonBody))
+	req.Header.Set("Content-Type", "application/json")
 	if err != nil {
-		statusChan <- 0
-		return
+		println("函数workerCreate NewRequest发生错误")
 	}
-	ContainerCreateReq.Header.Set("Content-Type", "application/json")
-	ContainerCreateClient := &http.Client{}
-	ContainerCreateRes, err := ContainerCreateClient.Do(ContainerCreateReq)
-	if ContainerCreateRes.StatusCode != http.StatusCreated || err != nil {
-		statusChan <- 0
-		return
-	}
-	resBody, err := ioutil.ReadAll(ContainerCreateRes.Body)
+	client := &http.Client{Timeout: 10 * time.Second}
+	res, err := client.Do(req)
 	if err != nil {
-		statusChan <- 0
-		return
+		println("ContainerCreate 错误为" + err.Error())
 	}
-	var data struct {
-		Id       string        `json:"Id"`
-		Warnings []interface{} `json:"Warnings"`
-	}
-	if err := json.Unmarshal(resBody, &data); err != nil {
-		statusChan <- 0
-		return
-	}
-	statusChan <- 88
+	defer res.Body.Close()
+	data, err := ioutil.ReadAll(res.Body)
+	println("ContainerCreate 返回信息：" + string(data))
+	println("ContainerCreate 函数发送http请求创建容器, 状态码为: " + res.Status)
 }
 
-func StartContainer(machine, containerName string, statusChan chan int) {
-	// 启动容器， 1 表示启动时失败
-	ContainerStartUrl := "http://" + machine + ":" + configuration.Configs.DockerPort + "/containers/" + containerName + "/start"
-	ContainerStartReq, err := http.NewRequest("POST", ContainerStartUrl, nil)
-	ContainerStartReq.Header.Set("Content-Type", "application/json")
+func ContainerStart(machine, containerName string, wgContainerStart *sync.WaitGroup) {
+	defer wgContainerStart.Done()
+	req, err := http.NewRequest("POST", "http://"+machine+":2375/containers/"+containerName+"/start", nil)
 	if err != nil {
-		statusChan <- 1
-		return
+		println("ContainerStart 函数 NewRequest的时候错了")
 	}
-	ContainerClient := &http.Client{}
-	ContainerStartRes, err := ContainerClient.Do(ContainerStartReq)
-	if err != nil || ContainerStartRes.StatusCode != http.StatusNoContent {
-		statusChan <- 1
-		return
-	}
-	statusChan <- 88
-}
-
-func DeleteContainer(machine, containerName string, statusChan chan int) {
-	// 删除容器， 2 表示删除容器失败
-	ContainerDeleteUrl := "http://" + machine + ":" + configuration.Configs.DockerPort + "/containers/" + containerName + "?force=1"
-	ContainerDeleteReq, err := http.NewRequest("DELETE", ContainerDeleteUrl, nil)
+	Client := &http.Client{}
+	res, err := Client.Do(req)
 	if err != nil {
-		statusChan <- 3
-		return
+		println("ContainerCreate 发送请求失败")
 	}
-	ContainerDeleteClient := &http.Client{}
-	ContainerDeleteRes, _ := ContainerDeleteClient.Do(ContainerDeleteReq)
-
-	if ContainerDeleteRes.StatusCode == http.StatusNotFound {
-		statusChan <- 88
-		return
-	}
-	if ContainerDeleteRes.StatusCode == http.StatusNoContent {
-		statusChan <- 88
-		return
-	}
-	statusChan <- 2
+	defer res.Body.Close()
+	data, _ := ioutil.ReadAll(res.Body)
+	println("ContainerStart 返回信息：" + string(data))
+	println("ContainerStart 函数发送http请求启动容器, 状态码为: " + res.Status)
 }

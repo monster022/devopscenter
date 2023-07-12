@@ -5,6 +5,13 @@ import (
 	"devopscenter/service"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strings"
+	"sync"
+)
+
+const (
+	HttpNewRequestError = 1000
+	HttpClientDoError   = 1001
 )
 
 func Create(c *gin.Context) {
@@ -20,51 +27,55 @@ func Create(c *gin.Context) {
 		c.JSON(http.StatusOK, response)
 		return
 	}
+	// 镜像名称中带有 / 处理
+	image := strings.Split(data.Image, ":")
 
-	// 定义一个channel
-	statusChan := make(chan int)
+	// 下载镜像
+	var wgImagePull sync.WaitGroup
+	for _, m := range data.Target {
+		wgImagePull.Add(1)
+		go service.ImagePull(m, image[0], image[1], &wgImagePull)
+	}
+	wgImagePull.Wait()
 
-	// 删除容器
-	for _, machine := range data.Target {
-		go service.DeleteContainer(machine, data.Name, statusChan)
+	// 删除镜像
+	var wgContainerDelete sync.WaitGroup
+	for _, m := range data.Target {
+		wgContainerDelete.Add(1)
+		go service.ContainerDelete(m, data.Name, &wgContainerDelete)
 	}
-	// 通过 channel 获取值来判断容器是否删除成功
-	for i := 0; i < len(data.Target); i++ {
-		s := <-statusChan
-		if s == 2 {
-			response.Message = "删除容器失败"
-			response.Data = s
-			c.JSON(http.StatusOK, response)
-			return
-		}
+	wgContainerDelete.Wait()
+
+	// 环境变量处理
+	aspEnvironment := data.Env
+	switch data.Env {
+	case "uat":
+		aspEnvironment = "UAT"
+		break
+	case "fat":
+		aspEnvironment = "FAT"
+		break
+	case "pro":
+		aspEnvironment = "Production"
+		break
 	}
 
-	// 创建容器
-	for _, machine := range data.Target {
-		go service.CreateContainer(machine, data.Name, data.Env, data.Image, data.Port, statusChan)
+	// 创建镜像
+	var wgContainerCreate sync.WaitGroup
+	for _, m := range data.Target {
+		wgContainerCreate.Add(1)
+		go service.ContainerCreate(m, aspEnvironment, data.Image, data.Name, data.Port, &wgContainerCreate)
 	}
-	// 通过 channel 获取值来判断你是否创建成功， 成功后则启动容器
-	for _, machine := range data.Target {
-		s := <-statusChan
-		if s == 0 {
-			response.Message = "容器创建失败"
-			response.Data = false
-			c.JSON(http.StatusOK, response)
-			return
-		} else {
-			go service.StartContainer(machine, data.Name, statusChan)
-		}
+	wgContainerCreate.Wait()
+
+	// 启动镜像
+	var wgContainerStart sync.WaitGroup
+	for _, m := range data.Target {
+		wgContainerStart.Add(1)
+		go service.ContainerStart(m, data.Name, &wgContainerStart)
 	}
-	// 通过 channel 获取值来判断容器是否启动成功
-	for i := 0; i < len(data.Target); i++ {
-		s := <-statusChan
-		if s == 1 {
-			response.Message = "容器启动失败"
-			response.Data = false
-			c.JSON(http.StatusOK, response)
-			return
-		}
-	}
+	wgContainerStart.Wait()
+
 	response.Data = true
 	c.JSON(http.StatusOK, response)
 }
