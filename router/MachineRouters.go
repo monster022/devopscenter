@@ -9,7 +9,7 @@ import (
 func MachineRegister(c *gin.Engine) {
 	api := c.Group("/devops/")
 	{
-		api.GET("/machine", middleware.JwtAuth(), machine.List)
+		api.GET("/machine", middleware.JwtAuth(), machine.ListV2)
 		api.GET("/machine/password", middleware.JwtAuth(), machine.Password)
 		api.POST("/machine", middleware.JwtAuth(), machine.Create)
 		api.DELETE("/machine", middleware.JwtAuth(), machine.Remove)

@@ -7,37 +7,6 @@ import (
 	"strconv"
 )
 
-func List(c *gin.Context) {
-	response := model.Res{
-		Code:    20000,
-		Message: "Successful",
-		Data:    nil,
-	}
-	pageParameter := c.Query("page")
-	sizeParameter := c.Query("size")
-	if pageParameter == "" || sizeParameter == "" {
-		response.Message = "Parameter nil"
-		c.JSON(http.StatusOK, response)
-		return
-	}
-	page, err1 := strconv.Atoi(pageParameter)
-	size, err2 := strconv.Atoi(sizeParameter)
-	if err1 != nil || err2 != nil {
-		response.Message = "Type Converter Fail"
-		c.JSON(http.StatusOK, response)
-		return
-	}
-	machine := model.Machine{}
-	total := machine.Total()
-	response.Data = machine.List(page, size)
-	c.JSON(http.StatusOK, gin.H{
-		"code":    response.Code,
-		"message": response.Message,
-		"data":    response.Data,
-		"total":   total,
-	})
-}
-
 func Password(c *gin.Context) {
 	response := model.Res{
 		Code:    20000,
@@ -111,6 +80,7 @@ func Remove(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, response)
 }
+
 func Update(c *gin.Context) {
 	response := model.Res{
 		Code:    200,
@@ -158,4 +128,63 @@ func PatchName(c *gin.Context) {
 		response.Data = result
 		c.JSON(http.StatusOK, response)
 	}
+}
+
+func ListV2(c *gin.Context) {
+	response := model.Res{
+		Code:    20000,
+		Message: "SUCCESS",
+		Data:    nil,
+	}
+	pageParameter := c.Query("page")
+	sizeParameter := c.Query("size")
+	ip := c.Query("ip")
+	if pageParameter == "" {
+		response.Message = "page 参数不能为空"
+		response.Data = false
+		c.JSON(http.StatusOK, response)
+		return
+	}
+	if sizeParameter == "" {
+		response.Message = "size 参数不能为空"
+		response.Data = false
+		c.JSON(http.StatusOK, response)
+		return
+	}
+	page, err := strconv.Atoi(pageParameter)
+	if err != nil {
+		response.Data = err.Error()
+		response.Message = "类型转换失败"
+		c.JSON(http.StatusOK, response)
+		return
+	}
+	size, err := strconv.Atoi(sizeParameter)
+	if err != nil {
+		response.Data = err.Error()
+		response.Message = "类型转换失败"
+		c.JSON(http.StatusOK, response)
+		return
+	}
+	machine := model.Machine{}
+	data, err := machine.VagueSearch(ip, page, size)
+	if err != nil {
+		response.Data = err.Error()
+		response.Message = "数据库操作失败"
+		c.JSON(http.StatusOK, response)
+		return
+	}
+	total, err := machine.VagueSearchTotal(ip)
+	if err != nil {
+		response.Data = err.Error()
+		response.Message = "数据库操作失败"
+		c.JSON(http.StatusOK, response)
+		return
+	}
+	response.Data = data
+	c.JSON(http.StatusOK, gin.H{
+		"code":    response.Code,
+		"message": response.Message,
+		"data":    response.Data,
+		"total":   total,
+	})
 }
