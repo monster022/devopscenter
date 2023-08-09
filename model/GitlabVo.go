@@ -58,14 +58,15 @@ type ProjectDetail struct {
 }
 
 type DeployProjectDetail struct {
-	Id        int    `json:"id"`
-	Project   string `json:"project"`
-	CommitID  string `json:"commit_id"`
-	Env       string `json:"env"`
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
-	Version   string `json:"version"`
-	Time      string `json:"time"`
+	Id          int    `json:"id"`
+	Project     string `json:"project"`
+	CommitID    string `json:"commit_id"`
+	Env         string `json:"env"`
+	Name        string `json:"name"`
+	Namespace   string `json:"namespace"`
+	Version     string `json:"version"`
+	PublishType string `json:"publish_type"`
+	Time        string `json:"time"`
 }
 
 func (p *Project) Insert() bool {
@@ -172,10 +173,10 @@ func (d ProjectDetail) Update(jobName, status string, jobId int) bool {
 	return true
 }
 
-func (d DeployProjectDetail) List(project string, page, size int) ([]*DeployProjectDetail, error) {
-	query := "SELECT * FROM deploy_info WHERE project=? ORDER BY id DESC LIMIT ? OFFSET ?"
+func (d DeployProjectDetail) List(project, publishType string, page, size int) ([]*DeployProjectDetail, error) {
+	query := "SELECT id, project, commit_id, env, name, namespace, version, time FROM deploy_info WHERE project=? AND publish_type=? ORDER BY id DESC LIMIT ? OFFSET ?"
 	mysqlEngine := helper.SqlContext
-	rows, err := mysqlEngine.Query(query, project, size, (page-1)*size)
+	rows, err := mysqlEngine.Query(query, project, publishType, size, (page-1)*size)
 	if err != nil {
 		return nil, err
 	}
@@ -190,13 +191,13 @@ func (d DeployProjectDetail) List(project string, page, size int) ([]*DeployProj
 	return data, nil
 }
 
-func (d DeployProjectDetail) CreateDeployInfo(project, commitId, env, name, namespace, version string) (sql.Result, error) {
+func (d DeployProjectDetail) CreateDeployInfo(project, commitId, env, name, namespace, publish_type, version string) (sql.Result, error) {
 	mysqlEngine := helper.SqlContext
-	stmt, err := mysqlEngine.Prepare("INSERT INTO deploy_info (`project`, `commit_id`, `env`, `name`, `namespace`, `version`) VALUES (?, ?, ?, ?, ?, ?)")
+	stmt, err := mysqlEngine.Prepare("INSERT INTO deploy_info (`project`, `commit_id`, `env`, `name`, `namespace`, `publish_type`, `version`) VALUES (?, ?, ?, ?, ?, ?, ?)")
 	if err != nil {
 		return nil, err
 	}
-	result, err := stmt.Exec(project, commitId, env, name, namespace, version)
+	result, err := stmt.Exec(project, commitId, env, name, namespace, publish_type, version)
 	if err != nil {
 		return nil, err
 	}

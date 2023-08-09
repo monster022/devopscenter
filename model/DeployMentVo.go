@@ -20,6 +20,7 @@ type DeploymentImage struct {
 	DeploymentName string `json:"deployment_name"`
 	Namespace      string `json:"namespace"`
 	Env            string `json:"env"`
+	PublishType    string `json:"publish_type"`
 	CreateBy       string `json:"create_by"`
 }
 
