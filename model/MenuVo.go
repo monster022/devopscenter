@@ -16,13 +16,14 @@ type Menu struct {
 	IsPublic    int    `json:"IsPublic"`
 	IsDelete    int    `json:"IsDelete"`
 	IsValid     int    `json:"IsValid"`
-	CreateDate  string `json:"CreateDate"`
-	ModifyDate  string `json:"ModifyDate"`
+	Icon        string `json:"Icon"`
+	//CreateDate  string `json:"CreateDate"`
+	//ModifyDate  string `json:"ModifyDate"`
 }
 
 func (m Menu) ListMenus(name string) ([]*Menu, error) {
 	query := `SELECT a.MenuCode, a.SystemCode, a.RelativeUrl, a.MenuNameCN, a.MenuNameEN, a.ParentCode, a.Category, a.SortNo, a.IsPublic,
-        a.IsDelete, a.IsValid, a.CreateDate, a.ModifyDate
+        a.IsDelete, a.IsValid, a.Icon
         FROM auth_menu a 
         WHERE a.IsDelete=0 AND a.IsValid=1 
             AND EXISTS(
@@ -55,7 +56,7 @@ func (m Menu) ListMenus(name string) ([]*Menu, error) {
 	for rows.Next() {
 		obj := &Menu{}
 		err = rows.Scan(&obj.MenuCode, &obj.SystemCode, &obj.RelativeUrl, &obj.MenuNameCN, &obj.MenuNameEN, &obj.ParentCode, &obj.Category, &obj.SortNo, &obj.IsPublic,
-			&obj.IsDelete, &obj.IsValid, &obj.CreateDate, &obj.ModifyDate)
+			&obj.IsDelete, &obj.IsValid, &obj.Icon)
 		if err != nil {
 			return nil, err
 		}

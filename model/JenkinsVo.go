@@ -19,6 +19,7 @@ type JenkinsTemplate struct {
 	DependentBranch     string `json:"dependent_branch"`
 	BuildPath           string `json:"build_path"`
 	PackageName         string `json:"package_name"`
+	Command             string `json:"command"`
 	ImageSource         string `json:"image_source"`
 	Language            string `json:"language"`
 	AliasName           string `json:"alias_name"`

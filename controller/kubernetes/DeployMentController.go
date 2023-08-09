@@ -128,7 +128,7 @@ func DeployPatch(c *gin.Context) {
 	// 记录数据库发布的版本
 	deployInfo := model.DeployProjectDetail{}
 	commitId := strings.Split(data.ImageSource, "-")
-	_, err := deployInfo.CreateDeployInfo(data.DeploymentName, commitId[1], data.Env, data.CreateBy, data.Namespace, data.ImageSource)
+	_, err := deployInfo.CreateDeployInfo(data.DeploymentName, commitId[1], data.Env, data.CreateBy, data.Namespace, data.PublishType, data.ImageSource)
 	if err != nil {
 		response.Message = "发布历史记录数据库失败"
 		response.Data = err.Error()

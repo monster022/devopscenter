@@ -288,6 +288,7 @@ func ListDeployDetail(c *gin.Context) {
 	}
 	projectPage := c.Query("page")
 	projectSize := c.Query("size")
+	publishType := c.Query("publishType")
 	page, err1 := strconv.Atoi(projectPage)
 	size, err2 := strconv.Atoi(projectSize)
 	if err1 != nil || err2 != nil {
@@ -296,7 +297,7 @@ func ListDeployDetail(c *gin.Context) {
 		return
 	}
 	deployProject := model.DeployProjectDetail{}
-	result, err := deployProject.List(c.Param("name"), page, size)
+	result, err := deployProject.List(c.Param("name"), publishType, page, size)
 	if err != nil {
 		response.Message = "数据库执行失败"
 		response.Data = err.Error()
