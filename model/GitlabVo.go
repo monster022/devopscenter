@@ -44,6 +44,7 @@ type Project struct {
 	Language      string `json:"language" db:"language"`
 	BuildPath     string `json:"build_path" db:"build_path"`
 	PackageName   string `json:"package_name" db:"package_name"`
+	Remark        string `json:"remark"`
 }
 
 type ProjectDetail struct {
@@ -96,14 +97,15 @@ func (p *Project) Patch(id int, status int) bool {
 }
 
 func (p *Project) List(page int, size int) (data []*Project) {
+	query := "select id, project_id, project_name, project_repo, project_status, alias_name, language, build_path, package_name, remark from project limit ? offset ?"
 	mysqlEngine := helper.SqlContext
-	rows, err := mysqlEngine.Query("select id, project_id, project_name, project_repo, project_status, alias_name, language, build_path, package_name from project limit ? offset ?", size, (page-1)*size)
+	rows, err := mysqlEngine.Query(query, size, (page-1)*size)
 	if err == sql.ErrNoRows {
 		log.Printf("Non Rows")
 	}
 	for rows.Next() {
 		obj := &Project{}
-		err = rows.Scan(&obj.Id, &obj.ProjectId, &obj.ProjectName, &obj.ProjectRepo, &obj.ProjectStatus, &obj.AliasName, &obj.Language, &obj.BuildPath, &obj.PackageName)
+		err = rows.Scan(&obj.Id, &obj.ProjectId, &obj.ProjectName, &obj.ProjectRepo, &obj.ProjectStatus, &obj.AliasName, &obj.Language, &obj.BuildPath, &obj.PackageName, &obj.Remark)
 		if err != nil {
 			log.Fatalln(err)
 		}
