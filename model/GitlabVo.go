@@ -97,7 +97,7 @@ func (p *Project) Patch(id int, status int) bool {
 
 func (p *Project) List(page int, size int) (data []*Project) {
 	mysqlEngine := helper.SqlContext
-	rows, err := mysqlEngine.Query("select * from project limit ? offset ?", size, (page-1)*size)
+	rows, err := mysqlEngine.Query("select id, project_id, package_name, project_repo, project_status, alias_name, language, build_path, project_name from project limit ? offset ?", size, (page-1)*size)
 	if err == sql.ErrNoRows {
 		log.Printf("Non Rows")
 	}

@@ -24,7 +24,7 @@ type OrderRequestBody struct {
 }
 
 func (o Order) ListOrder(page, size int) ([]*Order, error) {
-	query := "select * from `order` limit ? offset ?"
+	query := "select orderId, submitName, priority, message, tackleName, status, rejectReason, date from `order` limit ? offset ?"
 	mysqlEngine := helper.SqlContext
 	rows, err := mysqlEngine.Query(query, size, (page-1)*size)
 	if err != nil {
@@ -42,7 +42,7 @@ func (o Order) ListOrder(page, size int) ([]*Order, error) {
 }
 
 func (o Order) ListTackleName(page, size int, tackleName string) ([]*Order, error) {
-	query := "select * from `order` where tackleName = ? limit ? offset ?"
+	query := "select orderId, submitName, priority, message, status, rejectReason, date from `order` where tackleName = ? limit ? offset ?"
 	mysqlEngine := helper.SqlContext
 	rows, err := mysqlEngine.Query(query, tackleName, size, (page-1)*size)
 	if err != nil {
@@ -70,7 +70,7 @@ func (o Order) ListTackleNameCount(tackleName string) (total int, err error) {
 }
 
 func (o Order) ListSubmitName(page, size int, submitName string) ([]*Order, error) {
-	query := "select * from `order` where submitName = ? limit ? offset ?"
+	query := "select orderId, priority, message, tackleName, status, rejectReason, date from `order` where submitName = ? limit ? offset ?"
 	mysqlEngine := helper.SqlContext
 	rows, err := mysqlEngine.Query(query, submitName, size, (page-1)*size)
 	if err != nil {
