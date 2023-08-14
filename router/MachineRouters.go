@@ -11,6 +11,7 @@ func MachineRegister(c *gin.Engine) {
 	{
 		api.GET("/machine", middleware.JwtAuth(), machine.ListV2)
 		api.GET("/machine/password", middleware.JwtAuth(), machine.Password)
+		api.GET("/download", middleware.JwtAuth(), machine.Export)
 		api.POST("/machine", middleware.JwtAuth(), machine.Create)
 		api.DELETE("/machine", middleware.JwtAuth(), machine.Remove)
 		api.PUT("/machine", middleware.JwtAuth(), machine.Update)

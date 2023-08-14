@@ -5,20 +5,6 @@ import (
 	"devopscenter/helper"
 )
 
-/*
-CREATE TABLE `machine`  (
-	`id` int NOT NULL AUTO_INCREMENT COMMENT 'ID',
-	`instance_name` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '备注信息',
-	`instance_ip` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '机器的IP地址',
-	`instance_username` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '机器的用户名',
-	`instance_password` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '机器的密码',
-	`instance_cpu` int NULL DEFAULT NULL COMMENT '机器的cpu数量',
-	`instance_memory` int NULL DEFAULT NULL COMMENT '机器的内存数量',
-	`instance_tag` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '机器的类型',
-	PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = Dynamic;
-*/
-
 type Machine struct {
 	Id               int    `json:"id" db:"id"`
 	InstanceName     string `json:"instance_name" db:"instance_name"`
@@ -27,6 +13,7 @@ type Machine struct {
 	InstancePassword string `json:"instance_password" db:"instance_password"`
 	InstanceCpu      int    `json:"instance_cpu" db:"instance_cpu"`
 	InstanceMemory   int    `json:"instance_memory" db:"instance_memory"`
+	InstanceStatus   string `json:"instance_status" db:"instance_status"`
 	InstanceTag      string `json:"instance_tag" db:"instance_tag"`
 }
 
@@ -106,4 +93,23 @@ func (m Machine) VagueSearchTotal(ip string) (int, error) {
 		return 0, err
 	}
 	return total, nil
+}
+
+func (m Machine) DownloadData() ([]*Machine, error) {
+	query := "SELECT id, instance_name, instance_ip, instance_username, instance_password, instance_cpu, instance_memory, instance_status, instance_tag FROM machine"
+	mysqlEngine := helper.SqlContext
+	row, err := mysqlEngine.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	data := make([]*Machine, 0)
+	for row.Next() {
+		obj := &Machine{}
+		err := row.Scan(&obj.Id, &obj.InstanceName, &obj.InstanceIp, &obj.InstanceUsername, &obj.InstancePassword, &obj.InstanceCpu, &obj.InstanceMemory, &obj.InstanceStatus, &obj.InstanceTag)
+		if err != nil {
+			return nil, err
+		}
+		data = append(data, obj)
+	}
+	return data, nil
 }
