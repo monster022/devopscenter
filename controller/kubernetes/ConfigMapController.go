@@ -51,3 +51,28 @@ func ConfigMapAdd(c *gin.Context) {
 	response.Data = result
 	c.JSON(http.StatusOK, response)
 }
+
+func T(c *gin.Context) {
+	response := model.Res{
+		Code:    20000,
+		Message: "Successful",
+		Data:    nil,
+	}
+	var data model.TTT
+	err := c.ShouldBindJSON(&data)
+	if err != nil {
+		response.Message = "Failed"
+		response.Data = err.Error()
+		c.JSON(http.StatusOK, response)
+		return
+	}
+	configmap := make(map[string]string)
+	for _, data := range data.Data {
+		//print("name is : ", data.Name, "\n")
+		//print("value is : ", data.Value, "\n")
+		//print("\n")
+		configmap[data.Name] = data.Value
+	}
+
+	c.JSON(http.StatusOK, response)
+}

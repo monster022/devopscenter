@@ -6,23 +6,6 @@ import (
 	"log"
 )
 
-/*
-CREATE TABLE `service`  (
-
-		`id` int NOT NULL AUTO_INCREMENT COMMENT 'ID',
-		`name` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT 'service名称',
-		`port_name` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '端口的名称',
-	    `port` int NOT NULL DEFAULT 80 COMMENT 'service的端口',
-		`target_port` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT 'service的目标端口',
-		`node_port` int NOT NULL DEFAULT 0 COMMENT 'service的端口映射端口',
-		`protocol` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT 'service端口协议',
-		`type` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT 'service的类型',
-		`env` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT 'ingress对应的环境',
-		`namespace` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT 'ingress的名称空间',
-		PRIMARY KEY (`id`) USING BTREE
-
-) ENGINE = InnoDB CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = Dynamic;
-*/
 type ServiceCreate struct {
 	Name       string `json:"name"`
 	Protocol   string `json:"protocol"`

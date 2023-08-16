@@ -1,10 +1,8 @@
 package machine
 
 import (
-	"bytes"
 	"devopscenter/model"
 	"github.com/gin-gonic/gin"
-	"github.com/tealeg/xlsx"
 	"net/http"
 	"strconv"
 )
@@ -189,79 +187,6 @@ func ListV2(c *gin.Context) {
 		"data":    response.Data,
 		"total":   total,
 	})
-}
-
-func Download(c *gin.Context) {
-	response := model.Res{
-		Code:    20000,
-		Message: "Successful",
-		Data:    nil,
-	}
-
-	file := xlsx.NewFile()
-	sheet, _ := file.AddSheet("Sheet1")
-
-	// Add headers
-	row := sheet.AddRow()
-	row.AddCell().Value = "序号"
-	row.AddCell().Value = "实例名称"
-	row.AddCell().Value = "实例地址"
-	row.AddCell().Value = "用户名"
-	row.AddCell().Value = "密码"
-	row.AddCell().Value = "CPU"
-	row.AddCell().Value = "内存"
-	row.AddCell().Value = "实例状态"
-	row.AddCell().Value = "实例标签"
-
-	machine := model.Machine{}
-	downloadData, err := machine.DownloadData()
-	if err != nil {
-		response.Data = err.Error()
-		response.Message = "查询数据失败"
-		c.JSON(http.StatusOK, response)
-		return
-	}
-
-	var data [][]string
-	for _, valuePtr := range downloadData {
-		value := *valuePtr
-		row := []string{strconv.Itoa(value.Id), value.InstanceName, value.InstanceIp, value.InstanceUsername, value.InstancePassword,
-			strconv.Itoa(value.InstanceCpu), strconv.Itoa(value.InstanceMemory), value.InstanceStatus, value.InstanceTag}
-		data = append(data, row)
-	}
-
-	for _, rowData := range data {
-		row := sheet.AddRow()
-		for _, cellValue := range rowData {
-			cell := row.AddCell()
-			cell.Value = cellValue
-		}
-	}
-
-	// Save the Excel file to a buffer
-	buffer := new(bytes.Buffer)
-	err = file.Write(buffer)
-	if err != nil {
-		response.Data = err.Error()
-		response.Message = "文件创建失败"
-		c.JSON(http.StatusInternalServerError, response)
-		return
-	}
-
-	// Set response headers
-	c.Header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-	c.Header("Content-Disposition", "attachment; filename=machine.xlsx")
-
-	// Write the buffer to the response writer
-	_, err = buffer.WriteTo(c.Writer)
-	if err != nil {
-		response.Data = err.Error()
-		response.Message = "Error writing to response"
-		c.JSON(http.StatusInternalServerError, response)
-		return
-	}
-
-	c.Data(http.StatusOK, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buffer.Bytes())
 }
 
 func Export(c *gin.Context) {

@@ -143,12 +143,6 @@ func ServiceCreate(c *gin.Context) {
 		Spec: V1.ServiceSpec{
 			Ports: []V1.ServicePort{
 				0: {
-					/*
-						Name:       s.Name,
-						Protocol:   apiv1.ProtocolTCP,
-						Port:       utils.StrToInt32(s.Port),
-						TargetPort: intstr.IntOrString{intstr.Int, utils.StrToInt32(s.Port), s.Port},
-					*/
 					Name:     json.Name,
 					Protocol: V1.Protocol(json.Protocol),
 					Port:     int32(json.Port),

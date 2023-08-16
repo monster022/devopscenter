@@ -78,8 +78,8 @@ func (p *Project) Insert() bool {
 	if count != 0 {
 		return false
 	}
-	_, err := mysqlEngine.Exec("insert into project(project_id, project_name, project_repo, project_status, alias_name, language, build_path, package_name) values (?, ?, ?, ?, ?, ?, ?, ?)",
-		p.ProjectId, p.ProjectName, p.ProjectRepo, p.ProjectStatus, p.AliasName, p.Language, p.BuildPath, p.PackageName)
+	_, err := mysqlEngine.Exec("insert into project(project_id, project_name, project_repo, project_status, alias_name, language, build_path, package_name, remark) values (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		p.ProjectId, p.ProjectName, p.ProjectRepo, p.ProjectStatus, p.AliasName, p.Language, p.BuildPath, p.PackageName, "none")
 	if err != nil {
 		return false
 	}

@@ -24,19 +24,6 @@ type DeploymentImage struct {
 	CreateBy       string `json:"create_by"`
 }
 
-/*
-CREATE TABLE `deployment`  (
-	`id` int NOT NULL AUTO_INCREMENT COMMENT 'ID',
-	`name` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT 'deployment名称',
-    `replicate` int NOT NULL DEFAULT 0 COMMENT 'deployment的副本数',
-	`container_name` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT 'Pod名称',
-	`image` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT 'Pod镜像',
-	`env` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT 'ingress对应的环境',
-	`namespace` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT 'ingress的名称空间',
-	PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = Dynamic;
-*/
-
 type Deployment struct {
 	Id            int    `json:"id"`
 	Name          string `json:"name"`

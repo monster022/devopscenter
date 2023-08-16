@@ -11,6 +11,8 @@ func KubernetesRegister(c *gin.Engine) {
 	{
 		api.GET("/namespaces", middleware.JwtAuth(), kubernetes.NsList)
 
+		api.POST("/test/T", kubernetes.T)
+
 		api.GET("/deployment", middleware.JwtAuth(), kubernetes.DeployList)
 		api.GET("/deployment/:name", middleware.JwtAuth(), kubernetes.DeployGet)
 		api.GET("/deploymentV2", middleware.JwtAuth(), kubernetes.DeployListV2)
