@@ -11,8 +11,6 @@ func KubernetesRegister(c *gin.Engine) {
 	{
 		api.GET("/namespaces", middleware.JwtAuth(), kubernetes.NsList)
 
-		api.POST("/test/T", kubernetes.T)
-
 		api.GET("/deployment", middleware.JwtAuth(), kubernetes.DeployList)
 		api.GET("/deployment/:name", middleware.JwtAuth(), kubernetes.DeployGet)
 		api.GET("/deploymentV2", middleware.JwtAuth(), kubernetes.DeployListV2)
@@ -33,7 +31,7 @@ func KubernetesRegister(c *gin.Engine) {
 		api.GET("/cronjob", middleware.JwtAuth(), kubernetes.CronJobList)
 		api.GET("/cronjobV2", middleware.JwtAuth(), kubernetes.CronJobListV2)
 
-		api.GET("/configmap", middleware.JwtAuth(), kubernetes.ConfigMapList)
-		api.POST("/configmap", middleware.JwtAuth(), kubernetes.ConfigMapAdd)
+		api.GET("/configmap", middleware.JwtAuth(), kubernetes.ConfigMapListV2)
+		api.POST("/configmapV2", middleware.JwtAuth(), kubernetes.ConfigMapAddV2)
 	}
 }

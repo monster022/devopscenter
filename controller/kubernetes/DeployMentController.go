@@ -162,7 +162,14 @@ func DeployAdd(c *gin.Context) {
 		Data:    nil,
 	}
 	json := model.DeploymentAdd{}
-	c.ShouldBindJSON(&json)
+	err := c.ShouldBindJSON(&json)
+	if err != nil {
+		response.Data = err.Error()
+		response.Message = "json解析失败"
+		c.JSON(http.StatusOK, response)
+		return
+	}
+	// deployment 清单
 	replicas := int32(json.Replicas)
 	configFile := json.Env + "config"
 	deployment := &appsV1.Deployment{
@@ -207,15 +214,16 @@ func DeployAdd(c *gin.Context) {
 			},
 		},
 	}
-
+	// K8s 操作
 	data, err := service.DeploymentAdd(configFile, json.Namespace, deployment)
 	response.Data = data
 	if err != nil {
 		response.Message = "deployment create failed"
-		response.Data = err
+		response.Data = err.Error()
 		c.JSON(http.StatusOK, response)
 		return
 	}
+	// 添加数据到数据库记录
 	c.JSON(http.StatusOK, response)
 }
 
