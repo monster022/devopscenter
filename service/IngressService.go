@@ -19,3 +19,9 @@ func IngressDelete(configFile, namespace, ingressName string) error {
 	err := kubeEngine.ExtensionsV1beta1().Ingresses(namespace).Delete(context.TODO(), ingressName, metaV1.DeleteOptions{})
 	return err
 }
+
+func IngressCreate(configFile, namespace string, ingress *v1beta1.Ingress) (*v1beta1.Ingress, error) {
+	kubeEngine := helper.KubernetesConnect(configFile)
+	result, err := kubeEngine.ExtensionsV1beta1().Ingresses(namespace).Create(context.TODO(), ingress, metaV1.CreateOptions{})
+	return result, err
+}

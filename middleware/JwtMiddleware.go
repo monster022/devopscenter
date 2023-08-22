@@ -17,8 +17,8 @@ func JwtAuth() gin.HandlerFunc {
 			Data:    nil,
 		}
 
+		// 验证请求头
 		tokenString := c.Request.Header.Get("Authorization")
-
 		if tokenString == "" {
 			response.Code = 40001
 			response.Message = "Authorization header required"

@@ -6,12 +6,29 @@ import (
 	"log"
 )
 
-type DeploymentAdd struct {
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
-	Replicas  int    `json:"replicas"`
-	Image     string `json:"image"`
+//type DeploymentAdd struct {
+//	Name      string `json:"name"`
+//	Namespace string `json:"namespace"`
+//	Replicas  int    `json:"replicas"`
+//	Image     string `json:"image"`
+//	Env       string `json:"env"`
+//}
+
+type DeploymentBase struct {
 	Env       string `json:"env"`
+	Namespace string `json:"namespace"`
+	Name      string `json:"name"`
+}
+
+type DeployAdd struct {
+	DeploymentBase
+	Replicas   int    `json:"replicas"`
+	Image      string `json:"image"`
+	ConfigName string `json:"configName"`
+	Uri        string `json:"uri"`
+	Port       int32  `json:"port"`
+	Cpu        string `json:"cpu"`
+	Mem        string `json:"mem"`
 }
 
 type DeploymentImage struct {
@@ -22,6 +39,11 @@ type DeploymentImage struct {
 	Env            string `json:"env"`
 	PublishType    string `json:"publish_type"`
 	CreateBy       string `json:"create_by"`
+}
+
+type DeploymentV2 struct {
+	Id int `json:"id"`
+	DeployAdd
 }
 
 type Deployment struct {
@@ -78,4 +100,40 @@ func (m *Deployment) ImagePatch(image, env, namespace, name string) int64 {
 		return -1 // 数据库行数影响出错
 	}
 	return affectedRows
+}
+
+func (d DeployAdd) Insert(add *DeployAdd) (bool, error) {
+	query := "INSERT INTO deploy (env, namespace, name, replicas, image, configName, uri, port, cpu, mem) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+	mysqlEngine := helper.SqlContext
+	result, err := mysqlEngine.Exec(query, add.Env, add.Namespace, add.Name, add.Replicas, add.Image, add.ConfigName, add.Uri, add.Port, add.Cpu, add.Mem)
+	if err != nil {
+		return false, err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	if rowsAffected > 0 {
+		return true, nil
+	}
+	return false, nil
+}
+
+func (d DeployAdd) List(env, namespace string) ([]*DeploymentV2, error) {
+	query := "SELECT id, name, replicas, image, configName, uri, port, cpu, mem FROM deploy WHERE env=? AND namespace=?"
+	mysqlengine := helper.SqlContext
+	rows, err := mysqlengine.Query(query, env, namespace)
+	if err != nil {
+		return nil, err
+	}
+	data := make([]*DeploymentV2, 0)
+	for rows.Next() {
+		obj := &DeploymentV2{}
+		err := rows.Scan(&obj.Id, &obj.Name, &obj.Replicas, &obj.Image, &obj.ConfigName, &obj.Uri, &obj.Port, &obj.Cpu, &obj.Mem)
+		if err != nil {
+			return nil, err
+		}
+		data = append(data, obj)
+	}
+	return data, nil
 }

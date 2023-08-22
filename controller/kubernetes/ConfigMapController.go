@@ -9,24 +9,6 @@ import (
 	"net/http"
 )
 
-func ConfigMapList(c *gin.Context) {
-	response := model.Res{
-		Code:    20000,
-		Message: "successful",
-		Data:    nil,
-	}
-	configFile := c.Query("env") + "config"
-	data, err := service.ConfigMapList(configFile, c.Query("namespace"))
-	if err != nil {
-		response.Message = "该环境或者名称空间中无资源"
-		response.Data = err
-		c.JSON(http.StatusOK, response)
-		return
-	}
-	response.Data = data.Items
-	c.JSON(http.StatusOK, response)
-}
-
 func ConfigMapListV2(c *gin.Context) {
 	response := model.Res{
 		Code:    20000,

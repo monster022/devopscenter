@@ -9,8 +9,13 @@ type ConfigBase struct {
 	Name      string `json:"name"`
 	Namespace string `json:"namespace"`
 }
+
 type ConfigMapJson struct {
 	ConfigBase
+	ConfigMapData
+}
+
+type ConfigMapData struct {
 	Data []struct {
 		Key   string `json:"key"`
 		Value string `json:"value"`

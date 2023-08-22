@@ -13,8 +13,8 @@ func CronJobList(configFile, namespace string) (*v1beta1.CronJobList, error) {
 	return cronjob, err
 }
 
-func CronJobDelete(configFile, jobName, namespace string) error {
+func CronJobCreate(configFile, namespace string, cronjob *v1beta1.CronJob) (*v1beta1.CronJob, error) {
 	kubeEngine := helper.KubernetesConnect(configFile)
-	err := kubeEngine.BatchV1beta1().CronJobs(namespace).Delete(context.TODO(), jobName, metaV1.DeleteOptions{})
-	return err
+	result, err := kubeEngine.BatchV1beta1().CronJobs(namespace).Create(context.TODO(), cronjob, metaV1.CreateOptions{})
+	return result, err
 }

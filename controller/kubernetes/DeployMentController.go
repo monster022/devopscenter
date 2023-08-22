@@ -6,9 +6,10 @@ import (
 	"github.com/gin-gonic/gin"
 	appsV1 "k8s.io/api/apps/v1"
 	coreV1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"net/http"
-	"strconv"
 	"strings"
 )
 
@@ -71,39 +72,6 @@ func DeployGet(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-func DeployListV2(c *gin.Context) {
-	response := model.Res{
-		Code:    20000,
-		Message: "successful",
-		Data:    nil,
-	}
-	projectPage := c.Query("page")
-	projectSize := c.Query("size")
-	env := c.Query("env")
-	namespace := c.Query("namespace")
-	if env == "" || namespace == "" {
-		response.Message = "Parameter nil"
-		c.JSON(http.StatusOK, response)
-		return
-	}
-	page, err1 := strconv.Atoi(projectPage)
-	size, err2 := strconv.Atoi(projectSize)
-	if err1 != nil || err2 != nil {
-		response.Message = "Type Convert Failed"
-		c.JSON(http.StatusOK, response)
-		return
-	}
-	deployment := model.Deployment{}
-	data := deployment.List(env, namespace, page, size)
-	total := deployment.Count(namespace)
-	c.JSON(http.StatusOK, gin.H{
-		"code":    response.Code,
-		"message": response.Message,
-		"data":    data,
-		"total":   total,
-	})
-}
-
 func DeployPatch(c *gin.Context) {
 	response := model.Res{
 		Code:    20000,
@@ -155,57 +123,126 @@ func DeployPatch(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-func DeployAdd(c *gin.Context) {
+func DeployListV3(c *gin.Context) {
 	response := model.Res{
 		Code:    20000,
-		Message: "successful",
+		Message: "Successful",
 		Data:    nil,
 	}
-	json := model.DeploymentAdd{}
-	err := c.ShouldBindJSON(&json)
+
+	// 参数处理
+	env := c.Query("env")
+	namespace := c.Query("namespace")
+	if env == "" || namespace == "" {
+		response.Message = "env namespace 参数不能为空"
+		c.JSON(http.StatusOK, response)
+		return
+	}
+
+	deploy := model.DeployAdd{}
+	data, err := deploy.List(env, namespace)
+	if err != nil {
+		response.Data = err.Error()
+		response.Message = "数据库操作失败"
+		c.JSON(http.StatusOK, response)
+		return
+	}
+
+	response.Data = data
+	c.JSON(http.StatusOK, response)
+}
+
+func DeployAddV2(c *gin.Context) {
+	response := model.Res{
+		Code:    20000,
+		Message: "Successful",
+		Data:    nil,
+	}
+
+	// 解析json
+	jsonData := model.DeployAdd{}
+	err := c.ShouldBindJSON(&jsonData)
 	if err != nil {
 		response.Data = err.Error()
 		response.Message = "json解析失败"
 		c.JSON(http.StatusOK, response)
 		return
 	}
-	// deployment 清单
-	replicas := int32(json.Replicas)
-	configFile := json.Env + "config"
-	deployment := &appsV1.Deployment{
+
+	// 数据处理
+	replicas := int32(jsonData.Replicas)
+	configFile := jsonData.Env + "config"
+	deployAdd := &appsV1.Deployment{
 		ObjectMeta: metaV1.ObjectMeta{
 			Labels: map[string]string{
-				"app": json.Name,
+				"app": jsonData.Name,
 			},
-			Name:      json.Name,
-			Namespace: json.Namespace,
+			Name:      jsonData.Name,
+			Namespace: jsonData.Namespace,
 		},
 		Spec: appsV1.DeploymentSpec{
 			Replicas: &replicas,
 			Selector: &metaV1.LabelSelector{
 				MatchLabels: map[string]string{
-					"app": json.Name,
+					"app": jsonData.Name,
 				},
 			},
 			Template: coreV1.PodTemplateSpec{
 				ObjectMeta: metaV1.ObjectMeta{
 					Labels: map[string]string{
-						"app": json.Name,
+						"app": jsonData.Name,
 					},
 				},
 				Spec: coreV1.PodSpec{
 					Containers: []coreV1.Container{
 						{
-							Name:            json.Name,
-							Image:           json.Image,
-							ImagePullPolicy: coreV1.PullIfNotPresent,
 							EnvFrom: []coreV1.EnvFromSource{
 								{
 									ConfigMapRef: &coreV1.ConfigMapEnvSource{
 										LocalObjectReference: coreV1.LocalObjectReference{
-											Name: json.Name,
+											Name: jsonData.ConfigName,
 										},
+										Optional: boolPointer(false),
 									},
+								},
+							},
+							Image:           jsonData.Image,
+							ImagePullPolicy: coreV1.PullIfNotPresent,
+							Name:            jsonData.Name,
+							LivenessProbe: &coreV1.Probe{
+								FailureThreshold: 3,
+								PeriodSeconds:    10,
+								SuccessThreshold: 1,
+								TimeoutSeconds:   1,
+								ProbeHandler: coreV1.ProbeHandler{
+									HTTPGet: &coreV1.HTTPGetAction{
+										Path:   jsonData.Uri,
+										Port:   intstr.IntOrString{Type: intstr.Int, IntVal: jsonData.Port},
+										Scheme: "HTTP",
+									},
+								},
+							},
+							ReadinessProbe: &coreV1.Probe{
+								FailureThreshold: 3,
+								PeriodSeconds:    10,
+								SuccessThreshold: 1,
+								TimeoutSeconds:   1,
+								ProbeHandler: coreV1.ProbeHandler{
+									HTTPGet: &coreV1.HTTPGetAction{
+										Path:   jsonData.Uri,
+										Port:   intstr.IntOrString{Type: intstr.Int, IntVal: jsonData.Port},
+										Scheme: "HTTP",
+									},
+								},
+							},
+							Resources: coreV1.ResourceRequirements{
+								Requests: coreV1.ResourceList{
+									coreV1.ResourceCPU:    resource.MustParse(jsonData.Cpu),
+									coreV1.ResourceMemory: resource.MustParse(jsonData.Mem),
+								},
+								Limits: coreV1.ResourceList{
+									coreV1.ResourceCPU:    resource.MustParse(jsonData.Cpu),
+									coreV1.ResourceMemory: resource.MustParse(jsonData.Mem),
 								},
 							},
 						},
@@ -214,17 +251,31 @@ func DeployAdd(c *gin.Context) {
 			},
 		},
 	}
-	// K8s 操作
-	data, err := service.DeploymentAdd(configFile, json.Namespace, deployment)
-	response.Data = data
+
+	// 创建deployment
+	result, err := service.DeploymentAdd(configFile, jsonData.Namespace, deployAdd)
 	if err != nil {
-		response.Message = "deployment create failed"
 		response.Data = err.Error()
+		response.Message = "创建Deployment失败"
 		c.JSON(http.StatusOK, response)
 		return
 	}
-	// 添加数据到数据库记录
+
+	// 数据库记录
+	ok, err := jsonData.Insert(&jsonData)
+	if err != nil && !ok {
+		response.Data = err.Error()
+		response.Message = "数据库操作失败"
+		c.JSON(http.StatusOK, response)
+		return
+	}
+
+	response.Data = result
 	c.JSON(http.StatusOK, response)
+}
+
+func boolPointer(b bool) *bool {
+	return &b
 }
 
 func PodList(c *gin.Context) {
