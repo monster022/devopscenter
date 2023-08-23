@@ -17,7 +17,7 @@ $2.332.2$
 ###### dotnet_Template
 ```groovy
 def generateVersion() {
-    return new Date().format('yyyyMMddHHmmss')
+    return new Date().format('yyyyMMdd_HHmmss')
 }
 pipeline {
     agent {
@@ -52,9 +52,9 @@ pipeline {
                 sh '''
                     cd $Project/$Build_Path
                     echo \"
-FROM ${Image_Source}
+FROM mcr.microsoft.com/dotnet/aspnet:5.0
 WORKDIR /opt
-RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && echo 'Asia/Shanghai' >/etc/timezone
+RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && echo 'Asia/Shanghai' >/etc/timezone && sed -i 's@SECLEVEL=2@SECLEVEL=1@g' /etc/ssl/openssl.cnf && sed -i 's/MinProtocol = TLSv1.2/MinProtocol = TLSv1/g' /etc/ssl/openssl.cnf && sed -i 's/MinProtocol = TLSv1.2/MinProtocol = TLSv1/g' /usr/lib/ssl/openssl.cnf
 COPY out ./
 ENTRYPOINT [\\"dotnet\\", \\"${Package_Name}.dll\\"] \" > Dockerfile
                 '''
@@ -64,8 +64,8 @@ ENTRYPOINT [\\"dotnet\\", \\"${Package_Name}.dll\\"] \" > Dockerfile
             steps {
                 sh '''
                     cd $Project/$Build_Path
-                    docker build -t ${Harbor_Url}/${Environment_Unique}/${AliasName}${Sub_Name}:$Image_Version ./
-                    docker push ${Harbor_Url}/${Environment_Unique}/${AliasName}${Sub_Name}:$Image_Version
+                    docker build -t ${Harbor_Url}/${Environment_Unique}/${AliasName}${Sub_Name}:${Image_Version}-${ShortID} ./
+                    docker push ${Harbor_Url}/${Environment_Unique}/${AliasName}${Sub_Name}:${Image_Version}-${ShortID}
                 '''
             }
         }
@@ -86,7 +86,7 @@ ENTRYPOINT [\\"dotnet\\", \\"${Package_Name}.dll\\"] \" > Dockerfile
 ###### go_Template
 ```groovy
 def generateVersion() {
-    return new Date().format('yyyyMMddHHmmss')
+    return new Date().format('yyyyMMdd_HHmmss')
 }
 pipeline {
     agent {
@@ -131,8 +131,59 @@ ENTRYPOINT [\\"./${Project}\\"] \" > Dockerfile
             steps {
                 sh '''
                     cd $Project
-                    docker build -t ${Harbor_Url}/${Environment_Unique}/${Project}${Sub_Name}:$Image_Version ./
-                    docker push ${Harbor_Url}/${Environment_Unique}/${Project}${Sub_Name}:$Image_Version
+                    docker build -t ${Harbor_Url}/${Environment_Unique}/${Project}${Sub_Name}:${Image_Version}-${ShortID} ./
+                    docker push ${Harbor_Url}/${Environment_Unique}/${Project}${Sub_Name}:${Image_Version}-${ShortID}
+                '''
+            }
+        }
+    }
+    post {
+        always {
+            deleteDir()
+        }
+        failure {
+           sh '/usr/local/sbin/feishutalk --job-name=${JOB_NAME} --project=${AliasName} --build-display-name=${BUILD_DISPLAY_NAME} --message=失败 --author=${Create_By}'
+        }
+        success {
+            sh '/usr/local/sbin/feishutalk --job-name=${JOB_NAME} --project=${AliasName} --build-display-name=${BUILD_DISPLAY_NAME} --message=成功 --author=${Create_By}'
+        }
+    }
+}
+```
+###### html_Template
+```groovy
+def generateVersion() {
+    return new Date().format('yyyyMMdd_HHmmss')
+}
+pipeline {
+    agent {
+         label 'Linux'
+    }
+    environment {
+        Image_Version = generateVersion()
+        Harbor_Url = "harbor.chengdd.cn"
+    }
+    stages {
+        stage('Pull Code') {
+            steps {
+                checkout([$class: 'GitSCM', branches: [[name: '$Branch']], userRemoteConfigs: [[url: '$Repository']]])
+            }
+        }
+        stage('Write Dockerfile') {
+            steps {
+                sh '''
+                    echo \"
+FROM ${Image_Source}
+WORKDIR /opt
+ADD ./ ./ \" > Dockerfile
+                '''
+            }
+        }
+        stage('Build') {
+            steps {
+                sh '''
+                    docker build -t ${Harbor_Url}/${Environment_Unique}/${AliasName}:${Image_Version}-${ShortID} ./
+                    docker push ${Harbor_Url}/${Environment_Unique}/${AliasName}:${Image_Version}-${ShortID}
                 '''
             }
         }
@@ -153,7 +204,7 @@ ENTRYPOINT [\\"./${Project}\\"] \" > Dockerfile
 ###### vue_Template
 ```groovy
 def generateVersion() {
-    return new Date().format('yyyyMMddHHmmss')
+    return new Date().format('yyyyMMdd_HHmmss')
 }
 pipeline {
     agent {
@@ -166,24 +217,19 @@ pipeline {
     stages {
         stage('Pull Code') {
             steps {
-                sh '''
-                    git clone -b $Branch $Repository
-                '''
+                checkout([$class: 'GitSCM', branches: [[name: '$Branch']], userRemoteConfigs: [[url: '$Repository']]])
             }
         }
         stage('vue Build') {
             steps {
-                sh ''' 
-                    cd $Project
-                    npm install
-                    npm run build:${Environment_Unique}
-                '''
+                sh """
+                    ${Command}
+                """
             }
         }
         stage('Write Dockerfile') {
             steps {
                 sh '''
-                    cd $Project
                     echo \"
 FROM ${Image_Source}
 WORKDIR /opt
@@ -194,9 +240,8 @@ ADD ./dist ./ \" > Dockerfile
         stage('Build') {
             steps {
                 sh '''
-                    cd $Project
-                    docker build -t ${Harbor_Url}/${Environment_Unique}/${Project}${Sub_Name}:$Image_Version ./
-                    docker push ${Harbor_Url}/${Environment_Unique}/${Project}${Sub_Name}:$Image_Version
+                    docker build -t ${Harbor_Url}/${Environment_Unique}/${Project}${Sub_Name}:${Image_Version}-${ShortID} ./
+                    docker push ${Harbor_Url}/${Environment_Unique}/${Project}${Sub_Name}:${Image_Version}-${ShortID}
                 '''
             }
         }
