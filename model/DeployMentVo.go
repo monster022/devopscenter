@@ -6,14 +6,6 @@ import (
 	"log"
 )
 
-//type DeploymentAdd struct {
-//	Name      string `json:"name"`
-//	Namespace string `json:"namespace"`
-//	Replicas  int    `json:"replicas"`
-//	Image     string `json:"image"`
-//	Env       string `json:"env"`
-//}
-
 type DeploymentBase struct {
 	Env       string `json:"env"`
 	Namespace string `json:"namespace"`
@@ -136,4 +128,21 @@ func (d DeployAdd) List(env, namespace string) ([]*DeploymentV2, error) {
 		data = append(data, obj)
 	}
 	return data, nil
+}
+
+func (d DeployAdd) Delete(id int) (bool, error) {
+	query := "DELETE FROM deploy WHERE id=?"
+	mysqlEngine := helper.SqlContext
+	result, err := mysqlEngine.Exec(query, id)
+	if err != nil {
+		return false, err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	if rowsAffected > 0 {
+		return true, nil
+	}
+	return false, nil
 }
