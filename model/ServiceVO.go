@@ -1,87 +1,57 @@
 package model
 
 import (
-	"database/sql"
 	"devopscenter/helper"
-	"log"
 )
 
-/*
-CREATE TABLE `service`  (
-
-		`id` int NOT NULL AUTO_INCREMENT COMMENT 'ID',
-		`name` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT 'service名称',
-		`port_name` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '端口的名称',
-	    `port` int NOT NULL DEFAULT 80 COMMENT 'service的端口',
-		`target_port` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT 'service的目标端口',
-		`node_port` int NOT NULL DEFAULT 0 COMMENT 'service的端口映射端口',
-		`protocol` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT 'service端口协议',
-		`type` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT 'service的类型',
-		`env` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT 'ingress对应的环境',
-		`namespace` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT 'ingress的名称空间',
-		PRIMARY KEY (`id`) USING BTREE
-
-) ENGINE = InnoDB CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = Dynamic;
-*/
-type ServiceCreate struct {
+type ServiceCreateV2 struct {
+	Env        string `json:"env"`
 	Name       string `json:"name"`
-	Protocol   string `json:"protocol"`
+	Namespace  string `json:"namespace"`
 	Port       int    `json:"port"`
+	Protocol   string `json:"protocol"`
 	TargetPort int    `json:"target_port"`
 	Type       string `json:"type"`
+	Deployment string `json:"deployment"`
 }
 
 type Service struct {
-	Id         int    `json:"id"`
-	Name       string `json:"name"`
-	PortName   string `json:"port_name"`
-	Port       int    `json:"port"`
-	TargetPort string `json:"target_port"`
-	NodePort   int    `json:"node_port"`
-	Protocol   string `json:"protocol"`
-	Type       string `json:"type"`
-	Env        string `json:"env"`
-	Namespace  string `json:"namespace"`
+	Id int `json:"id"`
+	ServiceCreateV2
 }
 
-func (s Service) List(env, namespace string, page, size int) (data []*Service) {
+func (s Service) Insert(v2 *ServiceCreateV2) (bool, error) {
+	query := "INSERT INTO service(env, name, namespace, port, protocol, target_port, type, deployment) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
 	mysqlEngine := helper.SqlContext
-	rows, err := mysqlEngine.Query("select id, name, port_name, port, target_port, node_port, protocol, type, env, namespace from service where env = ? and namespace = ? limit ? offset ?", env, namespace, size, (page-1)*size)
-	if err == sql.ErrNoRows {
-		log.Printf("Non Rows")
+	result, err := mysqlEngine.Exec(query, v2.Env, v2.Name, v2.Namespace, v2.Port, v2.Protocol, v2.TargetPort, v2.Type, v2.Deployment)
+	if err != nil {
+		return false, err
 	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	if rowsAffected > 0 {
+		return true, nil
+	}
+	return false, nil
+}
+
+func (s Service) List(env, namespace string) ([]*Service, error) {
+	query := "SELECT id, name, port, protocol, target_port, type, deployment FROM service WHERE env=? AND namespace=?"
+	mysqlEngine := helper.SqlContext
+	rows, err := mysqlEngine.Query(query, env, namespace)
+	if err != nil {
+		return nil, err
+	}
+	data := make([]*Service, 0)
 	for rows.Next() {
 		obj := &Service{}
-		err = rows.Scan(&obj.Id, &obj.Name, &obj.PortName, &obj.Port, &obj.TargetPort, &obj.NodePort, &obj.Protocol, &obj.Type, &obj.Env, &obj.Namespace)
+		err := rows.Scan(&obj.Id, &obj.Name, &obj.Port, &obj.Protocol, &obj.TargetPort, &obj.Type, &obj.Deployment)
 		if err != nil {
-			log.Fatalln(err)
+			return nil, err
 		}
 		data = append(data, obj)
 	}
-	defer rows.Close()
-	return data
-}
-
-func (s Service) Count(namespace string) (total int) {
-	mysqlEngine := helper.SqlContext
-	mysqlEngine.QueryRow("select count(*) from service where namespace = ?", namespace).Scan(&total)
-	return total
-}
-
-func (s Service) Insert() bool {
-	mysqlEngine := helper.SqlContext
-	_, err := mysqlEngine.Exec("insert into service(name, port_name, port, target_port, node_port, protocol, type, env, namespace) values (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-		s.Name, s.PortName, s.Port, s.TargetPort, s.NodePort, s.Protocol, s.Type, s.Env, s.Namespace)
-	if err != nil {
-		return false
-	}
-	return true
-}
-
-func (s Service) Delete(id int) bool {
-	mysqlEngine := helper.SqlContext
-	if _, err := mysqlEngine.Exec("delete from service where id = ?", id); err != nil {
-		return false
-	}
-	return true
+	return data, nil
 }

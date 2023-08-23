@@ -188,3 +188,21 @@ func ListV2(c *gin.Context) {
 		"total":   total,
 	})
 }
+
+func Export(c *gin.Context) {
+	response := model.Res{
+		Code:    20000,
+		Message: "Successful",
+		Data:    nil,
+	}
+	machine := model.Machine{}
+	data, err := machine.DownloadData()
+	if err != nil {
+		response.Data = err.Error()
+		response.Message = "查询数据失败"
+		c.JSON(http.StatusOK, response)
+		return
+	}
+	response.Data = data
+	c.JSON(http.StatusOK, response)
+}

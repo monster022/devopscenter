@@ -8,7 +8,6 @@ import (
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"net/http"
-	"strconv"
 )
 
 func ServiceList(c *gin.Context) {
@@ -47,148 +46,90 @@ func ServiceList(c *gin.Context) {
 func ServiceListV2(c *gin.Context) {
 	response := model.Res{
 		Code:    20000,
-		Message: "successful",
+		Message: "Successful",
 		Data:    nil,
 	}
-	projectPage := c.Query("page")
-	projectSize := c.Query("size")
+
 	env := c.Query("env")
 	namespace := c.Query("namespace")
 	if env == "" || namespace == "" {
-		response.Message = "Parameter nil"
+		response.Message = "env namespace 参数不为空"
 		c.JSON(http.StatusOK, response)
 		return
 	}
-	page, err1 := strconv.Atoi(projectPage)
-	size, err2 := strconv.Atoi(projectSize)
-	if err1 != nil || err2 != nil {
-		response.Message = "Type Convert Failed"
-		c.JSON(http.StatusOK, response)
-		return
-	}
-	service := model.Service{}
-	data := service.List(env, namespace, page, size)
-	total := service.Count(namespace)
-	c.JSON(http.StatusOK, gin.H{
-		"code":    response.Code,
-		"message": response.Message,
-		"data":    data,
-		"total":   total,
-	})
-}
 
-func ServiceDelete(c *gin.Context) {
-	response := model.Res{
-		Code:    20000,
-		Message: "successful",
-		Data:    nil,
-	}
-	env := c.Query("env")
-	namespace := c.Query("namespace")
-	serviceName := c.Query("name")
-	idParams := c.Query("id")
-	if env == "" || namespace == "" || serviceName == "" || idParams == "" {
-		response.Message = "Parameter nil"
-		c.JSON(http.StatusOK, response)
-		return
-	}
-	id, err := strconv.Atoi(idParams)
+	ingress := model.Service{}
+	data, err := ingress.List(env, namespace)
 	if err != nil {
-		response.Message = "Type Convert Failed"
+		response.Data = err.Error()
+		response.Message = "数据库操作失败"
 		c.JSON(http.StatusOK, response)
 		return
 	}
-	path := env + "config"
-	if err := service.SvcDelete(path, namespace, serviceName); err != nil {
-		response.Message = "Service Delete Failed"
-		response.Data = err
-		c.JSON(http.StatusOK, response)
-		return
-	}
-	service := model.Service{}
-	if err := service.Delete(id); err == false {
-		response.Message = "Databases Delete Failed"
-		c.JSON(http.StatusOK, response)
-		return
-	}
-	response.Data = true
+
+	response.Data = data
 	c.JSON(http.StatusOK, response)
 }
 
-func ServiceCreate(c *gin.Context) {
+func ServiceCreateV2(c *gin.Context) {
 	response := model.Res{
 		Code:    20000,
 		Message: "successful",
 		Data:    nil,
 	}
-	env := c.Query("env")
-	namespace := c.Query("namespace")
-	json := model.ServiceCreate{}
-	if err := c.ShouldBindJSON(&json); err != nil {
-		response.Message = "Json ShouldBindJSON Failed"
-		response.Data = err
+
+	// 解析数据
+	jsonData := model.ServiceCreateV2{}
+	err := c.ShouldBindJSON(&jsonData)
+	if err != nil {
+		response.Data = err.Error()
+		response.Message = "json解析失败"
 		c.JSON(http.StatusOK, response)
 		return
 	}
-	if env == "" || namespace == "" {
-		response.Message = "Parameter nil"
-		c.JSON(http.StatusOK, response)
-		return
-	}
+
+	// 数据处理
+	configFile := jsonData.Env + "config"
 	svc := &V1.Service{
 		ObjectMeta: metaV1.ObjectMeta{
-			Namespace: namespace,
-			Name:      json.Name,
+			Namespace: jsonData.Namespace,
+			Name:      jsonData.Name,
 		},
 		Spec: V1.ServiceSpec{
 			Ports: []V1.ServicePort{
 				0: {
-					/*
-						Name:       s.Name,
-						Protocol:   apiv1.ProtocolTCP,
-						Port:       utils.StrToInt32(s.Port),
-						TargetPort: intstr.IntOrString{intstr.Int, utils.StrToInt32(s.Port), s.Port},
-					*/
-					Name:     json.Name,
-					Protocol: V1.Protocol(json.Protocol),
-					Port:     int32(json.Port),
-					TargetPort: intstr.IntOrString{
-						Type:   intstr.Int,
-						IntVal: int32(json.TargetPort),
-						StrVal: "TCP",
-					},
+					Name:       jsonData.Name,
+					Port:       int32(jsonData.Port),
+					Protocol:   V1.Protocol(jsonData.Protocol),
+					TargetPort: intstr.FromInt(jsonData.TargetPort),
 				},
 			},
-			Type: V1.ServiceType(json.Type),
+			Selector: map[string]string{
+				"app": jsonData.Deployment,
+			},
+			Type: V1.ServiceType(jsonData.Type),
 		},
 	}
-	configFile := env + "config"
-	data, err := service.SvcCreate(configFile, namespace, svc)
+
+	// 创建Service
+	result, err := service.SvcCreate(configFile, jsonData.Namespace, svc)
 	if err != nil {
-		response.Message = "Service Create Failed"
-		response.Data = err
+		response.Data = err.Error()
+		response.Message = "Service: " + jsonData.Name + " 创建失败"
 		c.JSON(http.StatusOK, response)
 		return
 	}
+
+	// 数据库记录
 	service := model.Service{}
-	service.Name = json.Name
-	service.PortName = json.Name
-	service.Port = json.Port
-	service.TargetPort = strconv.Itoa(json.TargetPort)
-	service.Protocol = json.Protocol
-	service.Type = json.Type
-	service.Env = env
-	service.Namespace = namespace
-	if json.Type == "NodePort" {
-		service.NodePort = int(data.Spec.Ports[0].NodePort)
-	} else {
-		service.NodePort = 0
-	}
-	if err := service.Insert(); err == false {
-		response.Message = "Databases Insert Failed"
+	ok, err := service.Insert(&jsonData)
+	if err != nil && !ok {
+		response.Data = err.Error()
+		response.Message = "数据库执行失败"
 		c.JSON(http.StatusOK, response)
 		return
 	}
-	response.Data = data
+
+	response.Data = result
 	c.JSON(http.StatusOK, response)
 }

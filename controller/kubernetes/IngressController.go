@@ -3,9 +3,12 @@ package kubernetes
 import (
 	"devopscenter/model"
 	"devopscenter/service"
+	"encoding/json"
 	"github.com/gin-gonic/gin"
+	"k8s.io/api/extensions/v1beta1"
+	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"net/http"
-	"strconv"
 )
 
 func IngressList(c *gin.Context) {
@@ -47,68 +50,110 @@ func IngressListV2(c *gin.Context) {
 		Message: "successful",
 		Data:    nil,
 	}
-	projectPage := c.Query("page")
-	projectSize := c.Query("size")
+
 	env := c.Query("env")
 	namespace := c.Query("namespace")
 	if env == "" || namespace == "" {
-		response.Message = "Parameter nil"
+		response.Message = "env namespace 参数不为空"
 		c.JSON(http.StatusOK, response)
 		return
 	}
-	page, err1 := strconv.Atoi(projectPage)
-	size, err2 := strconv.Atoi(projectSize)
-	if err1 != nil || err2 != nil {
-		response.Message = "Type Convert Failed"
-		c.JSON(http.StatusOK, response)
-		return
-	}
+
 	ingress := model.Ingress{}
-	data := ingress.List(env, namespace, page, size)
-	total := ingress.Count(namespace)
-	c.JSON(http.StatusOK, gin.H{
-		"code":    response.Code,
-		"message": response.Message,
-		"data":    data,
-		"total":   total,
-	})
+	data, err := ingress.List(env, namespace)
+	if err != nil {
+		response.Data = err.Error()
+		response.Message = "数据库操作失败"
+		c.JSON(http.StatusOK, response)
+		return
+	}
+
+	response.Data = data
+	c.JSON(http.StatusOK, response)
 }
 
-func IngressDelete(c *gin.Context) {
+func IngressCreate(c *gin.Context) {
 	response := model.Res{
 		Code:    20000,
-		Message: "successful",
+		Message: "Successful",
 		Data:    nil,
 	}
-	env := c.Query("env")
-	namespace := c.Query("namespace")
-	ingressName := c.Query("name")
-	idParams := c.Query("id")
-	if env == "" || namespace == "" || ingressName == "" || idParams == "" {
-		response.Message = "Parameter nil"
-		c.JSON(http.StatusOK, response)
-		return
-	}
-	id, err := strconv.Atoi(idParams)
+
+	// 接收参数
+	jsonData := model.IngressCreate{}
+	err := c.ShouldBindJSON(&jsonData)
 	if err != nil {
-		response.Message = "Type Convert Failed"
+		response.Data = err.Error()
+		response.Message = "json解析失败"
 		c.JSON(http.StatusOK, response)
 		return
 	}
-	configFile := env + "config"
-	if err := service.IngressDelete(configFile, namespace, ingressName); err != nil {
-		response.Message = "Ingress Delete Failed"
-		response.Data = err
+
+	// 数据处理
+	configFile := jsonData.Env + "config"
+	var httpIngressPath []v1beta1.HTTPIngressPath
+	for _, data := range jsonData.Rules {
+		httpIngressPath = append(httpIngressPath, v1beta1.HTTPIngressPath{
+			Path: data.Path,
+			PathType: func() *v1beta1.PathType {
+				pathType := v1beta1.PathTypePrefix
+				return &pathType
+			}(),
+			Backend: v1beta1.IngressBackend{
+				ServiceName: data.TargetService,
+				ServicePort: intstr.FromInt(data.TargetPort),
+			},
+		})
+	}
+	v1beta1Ingress := &v1beta1.Ingress{
+		ObjectMeta: metaV1.ObjectMeta{
+			Namespace: jsonData.Namespace,
+			Name:      jsonData.Name,
+			Annotations: map[string]string{
+				"nginx.ingress.kubernetes.io/rewrite-target": "$1",
+			},
+		},
+		Spec: v1beta1.IngressSpec{
+			Rules: []v1beta1.IngressRule{
+				{
+					Host: jsonData.Domain,
+					IngressRuleValue: v1beta1.IngressRuleValue{
+						HTTP: &v1beta1.HTTPIngressRuleValue{
+							Paths: httpIngressPath,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// 创建资源
+	result, err := service.IngressCreate(configFile, jsonData.Namespace, v1beta1Ingress)
+	if err != nil {
+		response.Data = err.Error()
+		response.Message = "资源创建失败"
 		c.JSON(http.StatusOK, response)
 		return
 	}
+
+	// 数据库操作
+	marshalData, err := json.Marshal(jsonData.Rules)
+	if err != nil {
+		response.Data = err.Error()
+		response.Message = "json序列化失败"
+		c.JSON(http.StatusOK, response)
+		return
+	}
+
 	ingress := model.Ingress{}
-	if err := ingress.Delete(id); err == false {
-		response.Message = "Databases Delete Failed"
+	ok, err := ingress.Insert(jsonData.Env, jsonData.Namespace, jsonData.Name, jsonData.Domain, string(marshalData))
+	if err != nil && !ok {
+		response.Message = "数据库操作失败"
+		response.Data = err.Error()
 		c.JSON(http.StatusOK, response)
 		return
 	}
-	response.Data = true
+
+	response.Data = result
 	c.JSON(http.StatusOK, response)
-	return
 }
