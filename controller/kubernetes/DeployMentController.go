@@ -10,6 +10,7 @@ import (
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -292,5 +293,52 @@ func PodList(c *gin.Context) {
 		return
 	}
 	response.Data = podList
+	c.JSON(http.StatusOK, response)
+}
+
+func DeployDelete(c *gin.Context) {
+	response := model.Res{
+		Code:    20000,
+		Message: "Successful",
+		Data:    nil,
+	}
+
+	// 数据处理
+	env := c.Query("env")
+	namespace := c.Query("namespace")
+	deployment := c.Query("deployment")
+	idParam := c.Query("id")
+	if env == "" || namespace == "" || deployment == "" {
+		response.Message = "env namespace deployment 参数不能为空"
+		c.JSON(http.StatusOK, response)
+		return
+	}
+
+	// 删除资源
+	configFile := env + "config"
+	err := service.DeploymentDelete(configFile, deployment, namespace)
+	if err != nil {
+		response.Data = err.Error()
+		response.Message = "资源删除失败"
+		c.JSON(http.StatusOK, response)
+		return
+	}
+
+	// 删除数据库记录
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		response.Data = err.Error()
+		response.Message = "类型转换失败"
+		c.JSON(http.StatusOK, response)
+		return
+	}
+	deploy := model.DeployAdd{}
+	ok, err := deploy.Delete(id)
+	if err != nil && !ok {
+		response.Data = err.Error()
+		response.Message = "数据库操作失败"
+		return
+	}
+	response.Data = true
 	c.JSON(http.StatusOK, response)
 }
