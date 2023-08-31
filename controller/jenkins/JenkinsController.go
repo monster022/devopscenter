@@ -16,6 +16,7 @@ func BuildV2(c *gin.Context) {
 		Message: "successful",
 		Data:    nil,
 	}
+
 	data := model.JenkinsTemplate{}
 	if err := c.ShouldBindJSON(&data); err != nil {
 		response.Message = "Json Paras Failed"
@@ -23,7 +24,6 @@ func BuildV2(c *gin.Context) {
 		c.JSON(http.StatusOK, response)
 		return
 	}
-	//name := data.Project + "_" + data.Env
 	name := data.Language + "_Template"
 	// 检查Jenkins job 是否存在
 	if err := service.CheckJob(name); err != nil {
@@ -40,12 +40,14 @@ func BuildV2(c *gin.Context) {
 		c.JSON(http.StatusOK, response)
 		return
 	}
+
 	// 获取构建ID
 	result, err := service.IdJob(name)
 	if err != nil {
 		c.JSON(http.StatusOK, response)
 		return
 	}
+
 	// 序列化参数记录构建信息，存入数据库
 	if marshalData, err := json.Marshal(data); err != nil {
 		response.Message = "Json Marshal Failed"

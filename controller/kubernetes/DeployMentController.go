@@ -79,6 +79,8 @@ func DeployPatch(c *gin.Context) {
 		Message: "successful",
 		Data:    nil,
 	}
+
+	// 数据处理
 	data := model.DeploymentImage{}
 	if err := c.ShouldBindJSON(&data); err != nil {
 		response.Message = "Json Paras Failed"
@@ -86,8 +88,11 @@ func DeployPatch(c *gin.Context) {
 		c.JSON(http.StatusOK, response)
 		return
 	}
+
+	// 修改镜像
 	path := data.Env + "config"
-	if err := service.DeploymentImagePatch(path, data.Namespace, data.ContainerName, data.DeploymentName, data.ImageSource); err != nil {
+	result, err := service.DeploymentImagePatch(path, data.Namespace, data.ContainerName, data.DeploymentName, data.ImageSource)
+	if err != nil {
 		response.Message = "Service Patch Failed"
 		response.Data = err
 		c.JSON(http.StatusOK, response)
@@ -97,7 +102,7 @@ func DeployPatch(c *gin.Context) {
 	// 记录数据库发布的版本
 	deployInfo := model.DeployProjectDetail{}
 	commitId := strings.Split(data.ImageSource, "-")
-	_, err := deployInfo.CreateDeployInfo(data.DeploymentName, commitId[1], data.Env, data.CreateBy, data.Namespace, data.PublishType, data.ImageSource)
+	_, err = deployInfo.CreateDeployInfo(data.DeploymentName, commitId[1], data.Env, data.CreateBy, data.Namespace, data.PublishType, data.ImageSource)
 	if err != nil {
 		response.Message = "发布历史记录数据库失败"
 		response.Data = err.Error()
@@ -105,22 +110,26 @@ func DeployPatch(c *gin.Context) {
 		return
 	}
 
-	deploy := model.Deployment{}
-	number := deploy.ImagePatch(data.ImageSource, data.Env, data.Namespace, data.DeploymentName)
-	response.Data = number
-	if number == -1 {
-		response.Message = "Databases Execute Failed"
-		c.JSON(http.StatusOK, response)
-		return
-	} else if number == 0 {
-		response.Message = "Databases Not Modify"
-		c.JSON(http.StatusOK, response)
-		return
-	} else if number > 1 {
-		response.Message = "Modify Lot Rows"
+	// 数据库记录，判断数据库中镜像是否与发布版本相同，相同直接返回
+	deploy := model.DeployAdd{}
+	image, err := deploy.ListImage(data.Env, data.Namespace, data.DeploymentName)
+	if *image == data.ImageSource {
+		response.Message = "更新镜像与现使用镜像相同"
+		response.Data = image
 		c.JSON(http.StatusOK, response)
 		return
 	}
+
+	// 不相同修改
+	ok, err := deploy.PatchImage(data.Env, data.Namespace, data.DeploymentName, data.ImageSource)
+	if err != nil || !ok {
+		response.Data = err
+		response.Message = "数据库更新镜像失败"
+		c.JSON(http.StatusOK, response)
+		return
+	}
+
+	response.Data = result
 	c.JSON(http.StatusOK, response)
 }
 
