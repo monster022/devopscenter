@@ -28,11 +28,11 @@ func DeploymentDelete(configFile, deploymentName, namespace string) error {
 	return err
 }
 
-func DeploymentImagePatch(configFile, namespace, containerName, deploymentName, image string) error {
+func DeploymentImagePatch(configFile, namespace, containerName, deploymentName, image string) (*v1.Deployment, error) {
 	kubeEngine := helper.KubernetesConnect(configFile)
 	data := []byte(fmt.Sprintf(`{"spec": {"template": {"spec": {"containers": [{"name": "%s", "image": "%s"}]}}}}`, containerName, image))
-	_, err := kubeEngine.AppsV1().Deployments(namespace).Patch(context.TODO(), deploymentName, types.StrategicMergePatchType, data, metaV1.PatchOptions{})
-	return err
+	result, err := kubeEngine.AppsV1().Deployments(namespace).Patch(context.TODO(), deploymentName, types.StrategicMergePatchType, data, metaV1.PatchOptions{})
+	return result, err
 }
 
 func DeploymentAdd(configFile, namespace string, deployment *v1.Deployment) (*v1.Deployment, error) {

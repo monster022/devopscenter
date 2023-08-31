@@ -146,3 +146,31 @@ func (d DeployAdd) Delete(id int) (bool, error) {
 	}
 	return false, nil
 }
+
+func (d DeployAdd) PatchImage(env, namespace, name, image string) (bool, error) {
+	query := "UPDATE deploy SET image=? WHERE env=? AND namespace=? AND name=?"
+	mysqlEngine := helper.SqlContext
+	result, err := mysqlEngine.Exec(query, image, env, namespace, name)
+	if err != nil {
+		return false, err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	if rowsAffected > 0 {
+		return true, err
+	}
+	return false, err
+}
+
+func (d DeployAdd) ListImage(env, namespace, name string) (*string, error) {
+	query := "SELECT image FROM deploy WHERE env=? AND namespace=? AND name=?"
+	mysqlEngine := helper.SqlContext
+	var image string
+	err := mysqlEngine.QueryRow(query, env, namespace, name).Scan(&image)
+	if err != nil {
+		return nil, err
+	}
+	return &image, nil
+}
