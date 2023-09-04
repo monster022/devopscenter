@@ -96,29 +96,35 @@ func (p *Project) Patch(id int, status int) bool {
 	return true
 }
 
-func (p *Project) List(page int, size int) (data []*Project) {
-	query := "select id, project_id, project_name, project_repo, project_status, alias_name, language, build_path, package_name, remark from project limit ? offset ?"
+func (p Project) VagueSearch(name string, page, size int) ([]*Project, error) {
+	query := "SELECT id, project_id, project_name, project_repo, project_status, alias_name, language, build_path, package_name, remark FROM project WHERE (project_name LIKE CONCAT('%', ?, '%') OR alias_name LIKE CONCAT('%', ?, '%')) LIMIT ? OFFSET ?"
 	mysqlEngine := helper.SqlContext
-	rows, err := mysqlEngine.Query(query, size, (page-1)*size)
-	if err == sql.ErrNoRows {
-		log.Printf("Non Rows")
+	rows, err := mysqlEngine.Query(query, name, name, size, (page-1)*size)
+	if err != nil {
+		return nil, err
 	}
+	data := make([]*Project, 0)
 	for rows.Next() {
-		obj := &Project{}
-		err = rows.Scan(&obj.Id, &obj.ProjectId, &obj.ProjectName, &obj.ProjectRepo, &obj.ProjectStatus, &obj.AliasName, &obj.Language, &obj.BuildPath, &obj.PackageName, &obj.Remark)
+		obj := Project{}
+		err := rows.Scan(&obj.Id, &obj.ProjectId, &obj.ProjectName, &obj.ProjectRepo, &obj.ProjectStatus, &obj.AliasName, &obj.Language, &obj.BuildPath, &obj.PackageName, &obj.Remark)
 		if err != nil {
-			log.Fatalln(err)
+			return nil, err
 		}
-		data = append(data, obj)
+		data = append(data, &obj)
 	}
-	defer rows.Close()
-	return data
+	return data, nil
 }
 
-func (p *Project) Count() (total int) {
+func (p Project) VagueSearchTotal(name string) (int, error) {
+	query := "SELECT count(*) FROM project WHERE (project_name LIKE CONCAT('%', ?, '%') OR alias_name LIKE CONCAT('%', ?, '%'))"
 	mysqlEngine := helper.SqlContext
-	mysqlEngine.QueryRow("select count(*) from project").Scan(&total)
-	return total
+	rows := mysqlEngine.QueryRow(query, name, name)
+	var total int
+	err := rows.Scan(&total)
+	if err != nil {
+		return 0, err
+	}
+	return total, nil
 }
 
 func (p *Project) Delete(id int) bool {

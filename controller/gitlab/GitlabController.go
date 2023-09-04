@@ -82,16 +82,29 @@ func List(c *gin.Context) {
 	}
 	projectPage := c.Query("page")
 	projectSize := c.Query("size")
-	page, err1 := strconv.Atoi(projectPage)
-	size, err2 := strconv.Atoi(projectSize)
-	if err1 != nil || err2 != nil {
-		response.Message = "Type Convert Failed"
+	vagueName := c.Query("name")
+	page, err := strconv.Atoi(projectPage)
+	size, err := strconv.Atoi(projectSize)
+	if err != nil || err != nil {
+		response.Message = "page size 类型转换失败"
 		c.JSON(http.StatusOK, response)
 		return
 	}
 	project := model.Project{}
-	data := project.List(page, size)
-	total := project.Count()
+	data, err := project.VagueSearch(vagueName, page, size)
+	if err != nil {
+		response.Message = "VagueSearch 数据库操作失败"
+		response.Data = err.Error()
+		c.JSON(http.StatusOK, response)
+		return
+	}
+	total, err := project.VagueSearchTotal(vagueName)
+	if err != nil {
+		response.Data = err.Error()
+		response.Message = "VagueSearchTotal 数据库操作失败"
+		c.JSON(http.StatusOK, response)
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"code":    response.Code,
 		"message": response.Message,
