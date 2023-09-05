@@ -145,9 +145,9 @@ func (p *Project) Edit(name, buildPath, packageName string) bool {
 	return true
 }
 
-func (d ProjectDetail) List(project string, page, size int) (data []*ProjectDetail) {
+func (d ProjectDetail) List(project string) (data []*ProjectDetail) {
 	mysqlEngine := helper.SqlContext
-	rows, err := mysqlEngine.Query("SELECT id, name, job_name, job_id, params, project, message, time FROM build_info WHERE project = ? ORDER BY id DESC limit ? offset ?", project, size, (page-1)*size)
+	rows, err := mysqlEngine.Query("SELECT id, name, job_name, job_id, params, project, message, time FROM build_info WHERE project = ? ORDER BY id DESC", project)
 	if err == sql.ErrNoRows {
 		log.Printf("Non Rows")
 	}
@@ -181,10 +181,10 @@ func (d ProjectDetail) Update(jobName, status string, jobId int) bool {
 	return true
 }
 
-func (d DeployProjectDetail) List(project, publishType string, page, size int) ([]*DeployProjectDetail, error) {
-	query := "SELECT id, project, commit_id, env, name, namespace, version, time FROM deploy_info WHERE project=? AND publish_type=? ORDER BY id DESC LIMIT ? OFFSET ?"
+func (d DeployProjectDetail) List(project, publishType string) ([]*DeployProjectDetail, error) {
+	query := "SELECT id, project, commit_id, env, name, namespace, version, time FROM deploy_info WHERE project=? AND publish_type=? ORDER BY id DESC"
 	mysqlEngine := helper.SqlContext
-	rows, err := mysqlEngine.Query(query, project, publishType, size, (page-1)*size)
+	rows, err := mysqlEngine.Query(query, project, publishType)
 	if err != nil {
 		return nil, err
 	}
