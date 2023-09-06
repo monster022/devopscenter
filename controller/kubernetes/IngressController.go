@@ -110,7 +110,7 @@ func IngressCreate(c *gin.Context) {
 			Namespace: jsonData.Namespace,
 			Name:      jsonData.Name,
 			Annotations: map[string]string{
-				"nginx.ingress.kubernetes.io/rewrite-target": "$1",
+				"nginx.ingress.kubernetes.io/rewrite-target": "/$1",
 			},
 		},
 		Spec: v1beta1.IngressSpec{
