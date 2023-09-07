@@ -90,6 +90,10 @@ func IngressCreate(c *gin.Context) {
 	}
 
 	// 数据处理
+	annotations := make(map[string]string)
+	if jsonData.Rewrite == true {
+		annotations["nginx.ingress.kubernetes.io/rewrite-target"] = "/$1"
+	}
 	configFile := jsonData.Env + "config"
 	var httpIngressPath []v1beta1.HTTPIngressPath
 	for _, data := range jsonData.Rules {
@@ -105,13 +109,12 @@ func IngressCreate(c *gin.Context) {
 			},
 		})
 	}
+	// ingress 配置文件
 	v1beta1Ingress := &v1beta1.Ingress{
 		ObjectMeta: metaV1.ObjectMeta{
-			Namespace: jsonData.Namespace,
-			Name:      jsonData.Name,
-			Annotations: map[string]string{
-				"nginx.ingress.kubernetes.io/rewrite-target": "/$1",
-			},
+			Namespace:   jsonData.Namespace,
+			Name:        jsonData.Name,
+			Annotations: annotations,
 		},
 		Spec: v1beta1.IngressSpec{
 			Rules: []v1beta1.IngressRule{
