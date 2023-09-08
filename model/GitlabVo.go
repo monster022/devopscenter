@@ -37,6 +37,7 @@ CREATE TABLE `project`  (
 type Project struct {
 	Id            int    `json:"id" db:"id"`
 	ProjectId     int    `json:"project_id" db:"project_id"`
+	AppId         string `json:"app_id"`
 	ProjectName   string `json:"project_name" db:"project_name"`
 	ProjectRepo   string `json:"project_repo" db:"project_repo"`
 	ProjectStatus int    `json:"project_status" db:"project_status"`
@@ -97,7 +98,7 @@ func (p *Project) Patch(id int, status int) bool {
 }
 
 func (p Project) VagueSearch(name string, page, size int) ([]*Project, error) {
-	query := "SELECT id, project_id, project_name, project_repo, project_status, alias_name, language, build_path, package_name, remark FROM project WHERE (project_name LIKE CONCAT('%', ?, '%') OR alias_name LIKE CONCAT('%', ?, '%')) LIMIT ? OFFSET ?"
+	query := "SELECT id, project_id, app_id, project_name, project_repo, project_status, alias_name, language, build_path, package_name, remark FROM project WHERE (project_name LIKE CONCAT('%', ?, '%') OR alias_name LIKE CONCAT('%', ?, '%')) LIMIT ? OFFSET ?"
 	mysqlEngine := helper.SqlContext
 	rows, err := mysqlEngine.Query(query, name, name, size, (page-1)*size)
 	if err != nil {
@@ -106,7 +107,7 @@ func (p Project) VagueSearch(name string, page, size int) ([]*Project, error) {
 	data := make([]*Project, 0)
 	for rows.Next() {
 		obj := Project{}
-		err := rows.Scan(&obj.Id, &obj.ProjectId, &obj.ProjectName, &obj.ProjectRepo, &obj.ProjectStatus, &obj.AliasName, &obj.Language, &obj.BuildPath, &obj.PackageName, &obj.Remark)
+		err := rows.Scan(&obj.Id, &obj.ProjectId, &obj.AppId, &obj.ProjectName, &obj.ProjectRepo, &obj.ProjectStatus, &obj.AliasName, &obj.Language, &obj.BuildPath, &obj.PackageName, &obj.Remark)
 		if err != nil {
 			return nil, err
 		}
