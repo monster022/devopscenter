@@ -37,6 +37,7 @@ CREATE TABLE `project`  (
 type Project struct {
 	Id            int    `json:"id" db:"id"`
 	ProjectId     int    `json:"project_id" db:"project_id"`
+	AppId         string `json:"app_id"`
 	ProjectName   string `json:"project_name" db:"project_name"`
 	ProjectRepo   string `json:"project_repo" db:"project_repo"`
 	ProjectStatus int    `json:"project_status" db:"project_status"`
@@ -96,29 +97,35 @@ func (p *Project) Patch(id int, status int) bool {
 	return true
 }
 
-func (p *Project) List(page int, size int) (data []*Project) {
-	query := "select id, project_id, project_name, project_repo, project_status, alias_name, language, build_path, package_name, remark from project limit ? offset ?"
+func (p Project) VagueSearch(name string, page, size int) ([]*Project, error) {
+	query := "SELECT id, project_id, app_id, project_name, project_repo, project_status, alias_name, language, build_path, package_name, remark FROM project WHERE (project_name LIKE CONCAT('%', ?, '%') OR alias_name LIKE CONCAT('%', ?, '%')) LIMIT ? OFFSET ?"
 	mysqlEngine := helper.SqlContext
-	rows, err := mysqlEngine.Query(query, size, (page-1)*size)
-	if err == sql.ErrNoRows {
-		log.Printf("Non Rows")
+	rows, err := mysqlEngine.Query(query, name, name, size, (page-1)*size)
+	if err != nil {
+		return nil, err
 	}
+	data := make([]*Project, 0)
 	for rows.Next() {
-		obj := &Project{}
-		err = rows.Scan(&obj.Id, &obj.ProjectId, &obj.ProjectName, &obj.ProjectRepo, &obj.ProjectStatus, &obj.AliasName, &obj.Language, &obj.BuildPath, &obj.PackageName, &obj.Remark)
+		obj := Project{}
+		err := rows.Scan(&obj.Id, &obj.ProjectId, &obj.AppId, &obj.ProjectName, &obj.ProjectRepo, &obj.ProjectStatus, &obj.AliasName, &obj.Language, &obj.BuildPath, &obj.PackageName, &obj.Remark)
 		if err != nil {
-			log.Fatalln(err)
+			return nil, err
 		}
-		data = append(data, obj)
+		data = append(data, &obj)
 	}
-	defer rows.Close()
-	return data
+	return data, nil
 }
 
-func (p *Project) Count() (total int) {
+func (p Project) VagueSearchTotal(name string) (int, error) {
+	query := "SELECT count(*) FROM project WHERE (project_name LIKE CONCAT('%', ?, '%') OR alias_name LIKE CONCAT('%', ?, '%'))"
 	mysqlEngine := helper.SqlContext
-	mysqlEngine.QueryRow("select count(*) from project").Scan(&total)
-	return total
+	rows := mysqlEngine.QueryRow(query, name, name)
+	var total int
+	err := rows.Scan(&total)
+	if err != nil {
+		return 0, err
+	}
+	return total, nil
 }
 
 func (p *Project) Delete(id int) bool {
@@ -139,9 +146,9 @@ func (p *Project) Edit(name, buildPath, packageName string) bool {
 	return true
 }
 
-func (d ProjectDetail) List(project string, page, size int) (data []*ProjectDetail) {
+func (d ProjectDetail) List(project string) (data []*ProjectDetail) {
 	mysqlEngine := helper.SqlContext
-	rows, err := mysqlEngine.Query("SELECT id, name, job_name, job_id, params, project, message, time FROM build_info WHERE project = ? ORDER BY id DESC limit ? offset ?", project, size, (page-1)*size)
+	rows, err := mysqlEngine.Query("SELECT id, name, job_name, job_id, params, project, message, time FROM build_info WHERE project = ? ORDER BY id DESC", project)
 	if err == sql.ErrNoRows {
 		log.Printf("Non Rows")
 	}
@@ -175,10 +182,10 @@ func (d ProjectDetail) Update(jobName, status string, jobId int) bool {
 	return true
 }
 
-func (d DeployProjectDetail) List(project, publishType string, page, size int) ([]*DeployProjectDetail, error) {
-	query := "SELECT id, project, commit_id, env, name, namespace, version, time FROM deploy_info WHERE project=? AND publish_type=? ORDER BY id DESC LIMIT ? OFFSET ?"
+func (d DeployProjectDetail) List(project, publishType string) ([]*DeployProjectDetail, error) {
+	query := "SELECT id, project, commit_id, env, name, namespace, version, time FROM deploy_info WHERE project=? AND publish_type=? ORDER BY id DESC"
 	mysqlEngine := helper.SqlContext
-	rows, err := mysqlEngine.Query(query, project, publishType, size, (page-1)*size)
+	rows, err := mysqlEngine.Query(query, project, publishType)
 	if err != nil {
 		return nil, err
 	}

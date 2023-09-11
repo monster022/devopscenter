@@ -83,7 +83,7 @@ func DeployPatch(c *gin.Context) {
 	// 数据处理
 	data := model.DeploymentImage{}
 	if err := c.ShouldBindJSON(&data); err != nil {
-		response.Message = "Json Paras Failed"
+		response.Message = "json解析失败"
 		response.Data = err
 		c.JSON(http.StatusOK, response)
 		return
@@ -93,7 +93,7 @@ func DeployPatch(c *gin.Context) {
 	path := data.Env + "config"
 	result, err := service.DeploymentImagePatch(path, data.Namespace, data.ContainerName, data.DeploymentName, data.ImageSource)
 	if err != nil {
-		response.Message = "Service Patch Failed"
+		response.Message = "k8s资源镜像修改失败"
 		response.Data = err
 		c.JSON(http.StatusOK, response)
 		return
@@ -104,7 +104,7 @@ func DeployPatch(c *gin.Context) {
 	commitId := strings.Split(data.ImageSource, "-")
 	_, err = deployInfo.CreateDeployInfo(data.DeploymentName, commitId[1], data.Env, data.CreateBy, data.Namespace, data.PublishType, data.ImageSource)
 	if err != nil {
-		response.Message = "发布历史记录数据库失败"
+		response.Message = "CreateDeployInfo 数据库操作失败"
 		response.Data = err.Error()
 		c.JSON(http.StatusOK, response)
 		return
@@ -113,6 +113,12 @@ func DeployPatch(c *gin.Context) {
 	// 数据库记录，判断数据库中镜像是否与发布版本相同，相同直接返回
 	deploy := model.DeployAdd{}
 	image, err := deploy.ListImage(data.Env, data.Namespace, data.DeploymentName)
+	if image == nil {
+		response.Message = "数据库中没有该应用的创建记录"
+		response.Data = image
+		c.JSON(http.StatusOK, response)
+		return
+	}
 	if *image == data.ImageSource {
 		response.Message = "更新镜像与现使用镜像相同"
 		response.Data = image

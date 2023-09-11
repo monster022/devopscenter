@@ -169,8 +169,10 @@ func (d DeployAdd) ListImage(env, namespace, name string) (*string, error) {
 	mysqlEngine := helper.SqlContext
 	var image string
 	err := mysqlEngine.QueryRow(query, env, namespace, name).Scan(&image)
-	if err != nil {
-		return nil, err
+	if err == sql.ErrNoRows {
+		return nil, nil // 没有匹配的记录，返回 nil 指针表示没有数据
+	} else if err != nil {
+		return nil, err // 其他错误情况
 	}
 	return &image, nil
 }

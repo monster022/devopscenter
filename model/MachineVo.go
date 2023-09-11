@@ -65,9 +65,10 @@ func (m Machine) PasswordByIp(ip string) (string, error) {
 }
 
 func (m Machine) VagueSearch(ip string, page, size int) ([]*Machine, error) {
-	query := "SELECT id, instance_name, instance_ip, instance_username, instance_cpu, instance_memory, instance_tag FROM machine WHERE instance_ip LIKE CONCAT('%', ?, '%') LIMIT ? OFFSET ?"
+	query := "SELECT id, instance_name, instance_ip, instance_username, instance_cpu, instance_memory, instance_tag FROM machine " +
+		"WHERE (instance_ip LIKE CONCAT('%', ?, '%') OR instance_name LIKE CONCAT('%', ?, '%')) LIMIT ? OFFSET ?"
 	mysqlEngine := helper.SqlContext
-	rows, err := mysqlEngine.Query(query, ip, size, (page-1)*size)
+	rows, err := mysqlEngine.Query(query, ip, ip, size, (page-1)*size)
 	if err != nil {
 		return nil, err
 	}
@@ -84,9 +85,9 @@ func (m Machine) VagueSearch(ip string, page, size int) ([]*Machine, error) {
 }
 
 func (m Machine) VagueSearchTotal(ip string) (int, error) {
-	query := "SELECT count(*) FROM machine WHERE instance_ip LIKE CONCAT('%', ?, '%')"
+	query := "SELECT count(*) FROM machine WHERE (instance_ip LIKE CONCAT('%', ?, '%') OR instance_name LIKE CONCAT('%', ?, '%'))"
 	mysqlEngine := helper.SqlContext
-	rows := mysqlEngine.QueryRow(query, ip)
+	rows := mysqlEngine.QueryRow(query, ip, ip)
 	var total int
 	err := rows.Scan(&total)
 	if err != nil {

@@ -82,16 +82,29 @@ func List(c *gin.Context) {
 	}
 	projectPage := c.Query("page")
 	projectSize := c.Query("size")
-	page, err1 := strconv.Atoi(projectPage)
-	size, err2 := strconv.Atoi(projectSize)
-	if err1 != nil || err2 != nil {
-		response.Message = "Type Convert Failed"
+	vagueName := c.Query("name")
+	page, err := strconv.Atoi(projectPage)
+	size, err := strconv.Atoi(projectSize)
+	if err != nil || err != nil {
+		response.Message = "page size 类型转换失败"
 		c.JSON(http.StatusOK, response)
 		return
 	}
 	project := model.Project{}
-	data := project.List(page, size)
-	total := project.Count()
+	data, err := project.VagueSearch(vagueName, page, size)
+	if err != nil {
+		response.Message = "VagueSearch 数据库操作失败"
+		response.Data = err.Error()
+		c.JSON(http.StatusOK, response)
+		return
+	}
+	total, err := project.VagueSearchTotal(vagueName)
+	if err != nil {
+		response.Data = err.Error()
+		response.Message = "VagueSearchTotal 数据库操作失败"
+		c.JSON(http.StatusOK, response)
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"code":    response.Code,
 		"message": response.Message,
@@ -265,17 +278,9 @@ func ListDetail(c *gin.Context) {
 		Message: "successful",
 		Data:    nil,
 	}
-	projectPage := c.Query("page")
-	projectSize := c.Query("size")
-	page, err1 := strconv.Atoi(projectPage)
-	size, err2 := strconv.Atoi(projectSize)
-	if err1 != nil || err2 != nil {
-		response.Message = "Type Convert Failed"
-		c.JSON(http.StatusOK, response)
-		return
-	}
+
 	project := model.ProjectDetail{}
-	result := project.List(c.Param("name"), page, size)
+	result := project.List(c.Param("name"))
 	response.Data = result
 	c.JSON(http.StatusOK, response)
 }
@@ -286,18 +291,11 @@ func ListDeployDetail(c *gin.Context) {
 		Message: "successful",
 		Data:    nil,
 	}
-	projectPage := c.Query("page")
-	projectSize := c.Query("size")
+
 	publishType := c.Query("publishType")
-	page, err1 := strconv.Atoi(projectPage)
-	size, err2 := strconv.Atoi(projectSize)
-	if err1 != nil || err2 != nil {
-		response.Message = "Type Convert Failed"
-		c.JSON(http.StatusOK, response)
-		return
-	}
+
 	deployProject := model.DeployProjectDetail{}
-	result, err := deployProject.List(c.Param("name"), publishType, page, size)
+	result, err := deployProject.List(c.Param("name"), publishType)
 	if err != nil {
 		response.Message = "数据库执行失败"
 		response.Data = err.Error()

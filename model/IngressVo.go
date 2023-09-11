@@ -11,7 +11,8 @@ type IngressBase struct {
 
 type IngressCreate struct {
 	IngressBase
-	Rules []struct {
+	Rewrite bool `json:"rewrite"`
+	Rules   []struct {
 		Path          string `json:"path"`
 		TargetPort    int    `json:"target_port"`
 		TargetService string `json:"target_service"`
