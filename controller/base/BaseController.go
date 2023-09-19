@@ -1,15 +1,22 @@
 package base
 
 import (
+	"devopscenter/configuration"
 	"devopscenter/model"
+	"devopscenter/utils"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
 func Get(c *gin.Context) {
+	//data := "@1q2w3e4r"
+	//s := utils.AesEncryptByECB(data, configuration.Configs.EncryptionKey)
+	data := "Unknown"
+	s, _ := utils.AesEncryptByGCM(data, configuration.Configs.EncryptionKey)
 	c.JSON(http.StatusOK, gin.H{
 		"language": "go",
 		"type":     "application callback",
+		"s":        s,
 	})
 }
 

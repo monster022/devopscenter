@@ -1,7 +1,9 @@
 package machine
 
 import (
+	"devopscenter/configuration"
 	"devopscenter/model"
+	"devopscenter/utils"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -27,7 +29,15 @@ func Password(c *gin.Context) {
 		return
 	}
 	machine := model.Machine{}
-	response.Data = machine.PasswordList(id)
+
+	password, err := utils.AesDecryptByGCM(machine.PasswordList(id), configuration.Configs.EncryptionKey)
+	if err != nil {
+		response.Data = err.Error()
+		response.Message = "密码解密失败"
+		c.JSON(http.StatusOK, response)
+		return
+	}
+	response.Data = password
 	c.JSON(http.StatusOK, response)
 }
 
